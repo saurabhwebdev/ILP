@@ -1238,6 +1238,8 @@ const RoleAssignmentModal = ({
 }) => {
   const [selectedRole, setSelectedRole] = useState<string>(user?.role || "USER");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [roles, setRoles] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
   
   // Reset selected role when user changes
   useEffect(() => {
@@ -1246,14 +1248,53 @@ const RoleAssignmentModal = ({
     }
   }, [user]);
   
-  // Available roles
-  const roles = [
-    { id: "ADMIN", name: "Admin", description: "Full system access with all privileges" },
-    { id: "GATE", name: "Gate Guard", description: "Manages entry/exit of vehicles at the gate" },
-    { id: "WEIGHBRIDGE", name: "Weighbridge Operator", description: "Handles weight measurement and verification" },
-    { id: "DOCK", name: "Dock Supervisor", description: "Manages loading/unloading operations at docks" },
-    { id: "USER", name: "Regular User", description: "Basic access with limited permissions" }
-  ];
+  // Fetch roles from Firestore
+  useEffect(() => {
+    const fetchRoles = async () => {
+      try {
+        setLoading(true);
+        
+        // Get roles collection
+        const rolesRef = collection(db, "roles");
+        const rolesSnapshot = await getDocs(rolesRef);
+        
+        if (rolesSnapshot.empty) {
+          // Fallback to default roles if none exist
+          setRoles([
+            { id: "ADMIN", name: "Admin", description: "Full system access with all privileges", color: "orange" },
+            { id: "GATE", name: "Gate", description: "Manages entry/exit of vehicles at the gate", color: "blue" },
+            { id: "WEIGHBRIDGE", name: "Weighbridge", description: "Handles weight measurement and verification", color: "purple" },
+            { id: "DOCK", name: "Dock", description: "Manages loading/unloading operations at docks", color: "green" },
+            { id: "USER", name: "Regular User", description: "Basic access with limited permissions", color: "gray" }
+          ]);
+        } else {
+          // Parse roles from Firestore
+          const rolesList: any[] = [];
+          rolesSnapshot.forEach((doc) => {
+            rolesList.push({
+              id: doc.id,
+              ...doc.data()
+            });
+          });
+          
+          setRoles(rolesList);
+        }
+      } catch (error) {
+        console.error("Error fetching roles:", error);
+        // Fallback to default roles
+        setRoles([
+          { id: "ADMIN", name: "Admin", description: "Full system access with all privileges", color: "orange" },
+          { id: "USER", name: "Regular User", description: "Basic access with limited permissions", color: "gray" }
+        ]);
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+    if (isOpen) {
+      fetchRoles();
+    }
+  }, [isOpen]);
   
   // Handle role assignment
   const handleRoleAssignment = async () => {
@@ -1270,15 +1311,23 @@ const RoleAssignmentModal = ({
     }
   };
   
-  // Get badge color based on role
-  const getRoleBadgeColor = (role: string) => {
-    switch (role) {
-      case 'ADMIN': return "bg-orange-100 text-orange-800 border-orange-200";
-      case 'GATE': return "bg-blue-100 text-blue-800 border-blue-200";
-      case 'WEIGHBRIDGE': return "bg-purple-100 text-purple-800 border-purple-200";
-      case 'DOCK': return "bg-green-100 text-green-800 border-green-200";
-      default: return "bg-gray-100 text-gray-800 border-gray-200";
+  // Get badge color based on role color
+  const getRoleBadgeColor = (role: any) => {
+    const colorMap: Record<string, string> = {
+      'orange': "bg-orange-100 text-orange-800 border-orange-200",
+      'blue': "bg-blue-100 text-blue-800 border-blue-200",
+      'purple': "bg-purple-100 text-purple-800 border-purple-200",
+      'green': "bg-green-100 text-green-800 border-green-200",
+      'gray': "bg-gray-100 text-gray-800 border-gray-200",
+      'red': "bg-red-100 text-red-800 border-red-200"
+    };
+    
+    const roleObj = roles.find(r => r.id === role);
+    if (roleObj && roleObj.color && colorMap[roleObj.color]) {
+      return colorMap[roleObj.color];
     }
+    
+    return "bg-gray-100 text-gray-800 border-gray-200";
   };
   
   return (
@@ -1308,22 +1357,28 @@ const RoleAssignmentModal = ({
         </DialogHeader>
         
         <div className="py-4">
-          <RadioGroup value={selectedRole} onValueChange={setSelectedRole} className="gap-6">
-            {roles.map((role) => (
-              <div key={role.id} className="flex items-start space-x-2">
-                <RadioGroupItem value={role.id} id={role.id} className="mt-1" />
-                <div className="flex-1">
-                  <Label htmlFor={role.id} className="flex items-center gap-2">
-                    <span>{role.name}</span>
-                    <Badge className={`${getRoleBadgeColor(role.id)} ml-2`}>
-                      {role.id}
-                    </Badge>
-                  </Label>
-                  <p className="text-sm text-gray-500 mt-0.5">{role.description}</p>
+          {loading ? (
+            <div className="flex justify-center items-center py-6">
+              <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-ilp-navy"></div>
+            </div>
+          ) : (
+            <RadioGroup value={selectedRole} onValueChange={setSelectedRole} className="gap-6">
+              {roles.map((role) => (
+                <div key={role.id} className="flex items-start space-x-2">
+                  <RadioGroupItem value={role.id} id={role.id} className="mt-1" />
+                  <div className="flex-1">
+                    <Label htmlFor={role.id} className="flex items-center gap-2">
+                      <span>{role.name}</span>
+                      <Badge className={`${getRoleBadgeColor(role.id)} ml-2`}>
+                        {role.id}
+                      </Badge>
+                    </Label>
+                    <p className="text-sm text-gray-500 mt-0.5">{role.description}</p>
+                  </div>
                 </div>
-              </div>
-            ))}
-          </RadioGroup>
+              ))}
+            </RadioGroup>
+          )}
         </div>
         
         <DialogFooter className="gap-2 sm:gap-0">
@@ -1335,8 +1390,8 @@ const RoleAssignmentModal = ({
           </Button>
           <Button
             onClick={handleRoleAssignment}
-            disabled={isSubmitting || selectedRole === user?.role}
-            className={selectedRole === user?.role ? "opacity-50 cursor-not-allowed" : ""}
+            disabled={isSubmitting || selectedRole === user?.role || loading}
+            className={(selectedRole === user?.role || loading) ? "opacity-50 cursor-not-allowed" : ""}
           >
             {isSubmitting ? (
               <>
@@ -1612,7 +1667,9 @@ const UserManagement = () => {
   const { toast } = useToast();
   const { currentUser } = useAuth();
   const [users, setUsers] = useState<any[]>([]);
+  const [roles, setRoles] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadingRoles, setLoadingRoles] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [roleModalOpen, setRoleModalOpen] = useState(false);
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
@@ -1634,9 +1691,10 @@ const UserManagement = () => {
     banDuration?: number;
   }
 
-  // Fetch users on component mount
+  // Fetch users and roles on component mount
   useEffect(() => {
     fetchUsers();
+    fetchRoles();
   }, []);
 
   // Format date safely
@@ -1657,20 +1715,68 @@ const UserManagement = () => {
     }
   };
 
+  // Fetch roles from Firestore
+  const fetchRoles = async () => {
+    try {
+      setLoadingRoles(true);
+      
+      // Get roles collection
+      const rolesRef = collection(db, "roles");
+      const rolesSnapshot = await getDocs(rolesRef);
+      
+      if (rolesSnapshot.empty) {
+        // Initialize with default roles if no roles exist in Firestore
+        setRoles([
+          { id: "ADMIN", name: "Admin", color: "orange" },
+          { id: "GATE", name: "Gate", color: "blue" },
+          { id: "WEIGHBRIDGE", name: "Weighbridge", color: "purple" },
+          { id: "DOCK", name: "Dock", color: "green" },
+          { id: "USER", name: "User", color: "gray" }
+        ]);
+      } else {
+        // Parse roles from Firestore
+        const rolesList: any[] = [];
+        rolesSnapshot.forEach((doc) => {
+          rolesList.push({
+            id: doc.id,
+            ...doc.data()
+          });
+        });
+        
+        setRoles(rolesList);
+      }
+    } catch (error) {
+      console.error("Error fetching roles:", error);
+      // Fallback to default roles on error
+      setRoles([
+        { id: "ADMIN", name: "Admin", color: "orange" },
+        { id: "USER", name: "User", color: "gray" }
+      ]);
+    } finally {
+      setLoadingRoles(false);
+    }
+  };
+
   // Get role badge styling
   const getRoleBadge = (role: string = "USER") => {
-    switch (role.toUpperCase()) {
-      case 'ADMIN':
-        return <span className="px-2 py-1 text-xs font-medium rounded bg-orange-100 text-orange-800">{role}</span>;
-      case 'GATE':
-        return <span className="px-2 py-1 text-xs font-medium rounded bg-blue-100 text-blue-800">{role}</span>;
-      case 'WEIGHBRIDGE':
-        return <span className="px-2 py-1 text-xs font-medium rounded bg-purple-100 text-purple-800">{role}</span>;
-      case 'DOCK':
-        return <span className="px-2 py-1 text-xs font-medium rounded bg-green-100 text-green-800">{role}</span>;
-      default:
-        return <span className="px-2 py-1 text-xs font-medium rounded bg-gray-100 text-gray-800">{role}</span>;
+    const roleObj = roles.find(r => r.id === role.toUpperCase());
+    
+    if (!roleObj) {
+      return <span className="px-2 py-1 text-xs font-medium rounded bg-gray-100 text-gray-800">{role || "USER"}</span>;
     }
+    
+    const colorMap: Record<string, string> = {
+      'orange': "bg-orange-100 text-orange-800",
+      'blue': "bg-blue-100 text-blue-800",
+      'purple': "bg-purple-100 text-purple-800",
+      'green': "bg-green-100 text-green-800",
+      'gray': "bg-gray-100 text-gray-800",
+      'red': "bg-red-100 text-red-800"
+    };
+    
+    const bgColorClass = colorMap[roleObj.color] || "bg-gray-100 text-gray-800";
+    
+    return <span className={`px-2 py-1 text-xs font-medium rounded ${bgColorClass}`}>{roleObj.name}</span>;
   };
 
   // Fetch users from Firestore
@@ -2178,6 +2284,696 @@ const UserManagement = () => {
         user={selectedUser}
         onBanUser={banUser}
       />
+    </div>
+  );
+};
+
+// RoleManagement component
+const RoleManagement = () => {
+  const { toast } = useToast();
+  const { currentUser } = useAuth();
+  const [roles, setRoles] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [newRoleName, setNewRoleName] = useState("");
+  const [newRoleDescription, setNewRoleDescription] = useState("");
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [selectedRole, setSelectedRole] = useState<any>(null);
+  const [editedRoleName, setEditedRoleName] = useState("");
+  const [editedRoleDescription, setEditedRoleDescription] = useState("");
+  const [editedPageAccess, setEditedPageAccess] = useState<Record<string, boolean>>({});
+  const [isAddingRole, setIsAddingRole] = useState(false);
+
+  // Available application pages
+  const availablePages = [
+    { id: "dashboard", name: "Dashboard", description: "Main dashboard overview" },
+    { id: "truck-entry", name: "Truck Entry", description: "Truck entry and registration" },
+    { id: "transporter-collaboration", name: "Transporter Collaboration", description: "Manage transporters collaboration" },
+    { id: "shift-handover", name: "Shift Handover", description: "Handle shift changes and handovers" },
+    { id: "weigh-bridge", name: "Weigh Bridge", description: "Manage weight measurements" },
+    { id: "dock", name: "Dock", description: "Dock management and operations" },
+    { id: "settings", name: "Settings", description: "System settings and configuration" },
+    { id: "profile", name: "Profile", description: "User profile management" }
+  ];
+
+  // Fetch roles on component mount
+  useEffect(() => {
+    fetchRoles();
+  }, []);
+
+  // Fetch roles from Firestore
+  const fetchRoles = async () => {
+    if (!currentUser) return;
+    
+    try {
+      setLoading(true);
+      
+      // Get roles collection
+      const rolesRef = collection(db, "roles");
+      const rolesSnapshot = await getDocs(rolesRef);
+      
+      if (rolesSnapshot.empty) {
+        // Initialize with default roles if no roles exist
+        const defaultRoles = [
+          {
+            id: "ADMIN",
+            name: "Admin",
+            description: "Full system access with all privileges",
+            color: "orange",
+            permissions: ["all"],
+            pageAccess: {
+              "dashboard": true,
+              "truck-entry": true,
+              "transporter-collaboration": true,
+              "shift-handover": true,
+              "weigh-bridge": true,
+              "dock": true,
+              "settings": true,
+              "profile": true
+            },
+            createdAt: serverTimestamp(),
+            createdBy: currentUser.uid
+          },
+          {
+            id: "GATE",
+            name: "Gate",
+            description: "Manages truck entry and exit at the gates",
+            color: "blue",
+            permissions: ["truck_entry", "gate_processing"],
+            pageAccess: {
+              "dashboard": true,
+              "truck-entry": true,
+              "shift-handover": true,
+              "profile": true
+            },
+            createdAt: serverTimestamp(),
+            createdBy: currentUser.uid
+          },
+          {
+            id: "WEIGHBRIDGE",
+            name: "Weighbridge",
+            description: "Handles weight measurements and verifications",
+            color: "purple",
+            permissions: ["weighbridge_processing"],
+            pageAccess: {
+              "dashboard": true,
+              "weigh-bridge": true,
+              "shift-handover": true,
+              "profile": true
+            },
+            createdAt: serverTimestamp(),
+            createdBy: currentUser.uid
+          },
+          {
+            id: "DOCK",
+            name: "Dock",
+            description: "Manages loading/unloading operations at docks",
+            color: "green",
+            permissions: ["dock_processing"],
+            pageAccess: {
+              "dashboard": true,
+              "dock": true,
+              "shift-handover": true,
+              "profile": true
+            },
+            createdAt: serverTimestamp(),
+            createdBy: currentUser.uid
+          },
+          {
+            id: "USER",
+            name: "User",
+            description: "Basic access with limited permissions",
+            color: "gray",
+            permissions: ["view"],
+            pageAccess: {
+              "dashboard": true,
+              "profile": true
+            },
+            createdAt: serverTimestamp(),
+            createdBy: currentUser.uid
+          }
+        ];
+        
+        // Add default roles to Firestore
+        for (const role of defaultRoles) {
+          await setDoc(doc(db, "roles", role.id), role);
+        }
+        
+        setRoles(defaultRoles);
+      } else {
+        // Parse roles from Firestore
+        const rolesList: any[] = [];
+        rolesSnapshot.forEach((doc) => {
+          rolesList.push({
+            id: doc.id,
+            ...doc.data()
+          });
+        });
+        
+        setRoles(rolesList);
+      }
+    } catch (error) {
+      console.error("Error fetching roles:", error);
+      toast({
+        title: "Error",
+        description: "Failed to load roles. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Handle adding a new role
+  const handleAddRole = async () => {
+    if (!currentUser) return;
+    
+    try {
+      if (!newRoleName.trim()) {
+        toast({
+          title: "Error",
+          description: "Role name is required.",
+          variant: "destructive",
+        });
+        return;
+      }
+      
+      // Generate role ID from name (uppercase, no spaces)
+      const roleId = newRoleName.toUpperCase().replace(/\s+/g, "_");
+      
+      // Check if role ID already exists
+      const roleExists = roles.some(role => role.id === roleId);
+      if (roleExists) {
+        toast({
+          title: "Error",
+          description: "A role with this name already exists.",
+          variant: "destructive",
+        });
+        return;
+      }
+      
+      setIsAddingRole(true);
+      
+      // Default page access - only dashboard and profile
+      const defaultPageAccess: Record<string, boolean> = {
+        "dashboard": true,
+        "profile": true
+      };
+      
+      // Create new role object
+      const newRole = {
+        id: roleId,
+        name: newRoleName,
+        description: newRoleDescription || "No description provided",
+        color: "gray", // Default color
+        permissions: ["view"], // Default permission
+        pageAccess: defaultPageAccess,
+        createdAt: serverTimestamp(),
+        createdBy: currentUser.uid,
+        updatedAt: serverTimestamp(),
+        updatedBy: currentUser.uid
+      };
+      
+      // Add role to Firestore
+      await setDoc(doc(db, "roles", roleId), newRole);
+      
+      // Update local state
+      setRoles([...roles, { ...newRole, createdAt: new Date() }]);
+      
+      // Reset form
+      setNewRoleName("");
+      setNewRoleDescription("");
+      
+      toast({
+        title: "Success",
+        description: `Role "${newRoleName}" has been created.`,
+      });
+    } catch (error) {
+      console.error("Error adding role:", error);
+      toast({
+        title: "Error",
+        description: "Failed to create role. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsAddingRole(false);
+    }
+  };
+
+  // Open edit role dialog
+  const openEditDialog = (role: any) => {
+    setSelectedRole(role);
+    setEditedRoleName(role.name);
+    setEditedRoleDescription(role.description);
+    
+    // Initialize page access for editing
+    const initialPageAccess: Record<string, boolean> = {};
+    availablePages.forEach(page => {
+      initialPageAccess[page.id] = role.pageAccess?.[page.id] === true;
+    });
+    
+    setEditedPageAccess(initialPageAccess);
+    setEditDialogOpen(true);
+  };
+
+  // Handle role update
+  const handleUpdateRole = async () => {
+    if (!currentUser || !selectedRole) return;
+    
+    try {
+      if (!editedRoleName.trim()) {
+        toast({
+          title: "Error",
+          description: "Role name is required.",
+          variant: "destructive",
+        });
+        return;
+      }
+      
+      // For ADMIN role, ensure all pages are accessible
+      let finalPageAccess = { ...editedPageAccess };
+      if (selectedRole.id === "ADMIN") {
+        availablePages.forEach(page => {
+          finalPageAccess[page.id] = true;
+        });
+      }
+      
+      // Update role in Firestore
+      const roleRef = doc(db, "roles", selectedRole.id);
+      await updateDoc(roleRef, {
+        name: editedRoleName,
+        description: editedRoleDescription || "No description provided",
+        pageAccess: finalPageAccess,
+        updatedAt: serverTimestamp(),
+        updatedBy: currentUser.uid
+      });
+      
+      // Update local state
+      setRoles(roles.map(role => 
+        role.id === selectedRole.id 
+          ? { 
+              ...role, 
+              name: editedRoleName, 
+              description: editedRoleDescription || "No description provided",
+              pageAccess: finalPageAccess,
+              updatedAt: new Date(),
+              updatedBy: currentUser.uid
+            }
+          : role
+      ));
+      
+      // Close dialog
+      setEditDialogOpen(false);
+      
+      toast({
+        title: "Success",
+        description: `Role "${editedRoleName}" has been updated.`,
+      });
+    } catch (error) {
+      console.error("Error updating role:", error);
+      toast({
+        title: "Error",
+        description: "Failed to update role. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  // Toggle page access in edit dialog
+  const togglePageAccess = (pageId: string) => {
+    setEditedPageAccess(prev => ({
+      ...prev,
+      [pageId]: !prev[pageId]
+    }));
+  };
+
+  // Open delete role dialog
+  const openDeleteDialog = (role: any) => {
+    setSelectedRole(role);
+    setDeleteDialogOpen(true);
+  };
+
+  // Handle role deletion
+  const handleDeleteRole = async () => {
+    if (!currentUser || !selectedRole) return;
+    
+    try {
+      // Protect system roles from deletion
+      if (["ADMIN", "USER"].includes(selectedRole.id)) {
+        toast({
+          title: "Cannot Delete",
+          description: "System roles cannot be deleted.",
+          variant: "destructive",
+        });
+        setDeleteDialogOpen(false);
+        return;
+      }
+      
+      // Check if role is assigned to any users
+      const usersRef = collection(db, "users");
+      const q = query(usersRef, where("role", "==", selectedRole.id));
+      const usersSnapshot = await getDocs(q);
+      
+      if (!usersSnapshot.empty) {
+        toast({
+          title: "Cannot Delete",
+          description: `This role is assigned to ${usersSnapshot.size} user(s). Please reassign users before deleting.`,
+          variant: "destructive",
+        });
+        setDeleteDialogOpen(false);
+        return;
+      }
+      
+      // Delete role from Firestore
+      await deleteDoc(doc(db, "roles", selectedRole.id));
+      
+      // Update local state
+      setRoles(roles.filter(role => role.id !== selectedRole.id));
+      
+      // Close dialog
+      setDeleteDialogOpen(false);
+      
+      toast({
+        title: "Success",
+        description: `Role "${selectedRole.name}" has been deleted.`,
+      });
+    } catch (error) {
+      console.error("Error deleting role:", error);
+      toast({
+        title: "Error",
+        description: "Failed to delete role. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  // Get role badge styling
+  const getRoleBadge = (role: any) => {
+    const colors: Record<string, string> = {
+      "orange": "bg-orange-100 text-orange-800",
+      "blue": "bg-blue-100 text-blue-800",
+      "purple": "bg-purple-100 text-purple-800",
+      "green": "bg-green-100 text-green-800",
+      "gray": "bg-gray-100 text-gray-800",
+      "red": "bg-red-100 text-red-800"
+    };
+    
+    const badgeClass = colors[role.color] || colors.gray;
+    return <span className={`px-2 py-1 text-xs font-medium rounded ${badgeClass}`}>{role.name}</span>;
+  };
+
+  // Get page access badge
+  const getPageAccessBadge = (role: any, pageId: string) => {
+    const hasAccess = role.pageAccess?.[pageId] === true;
+    
+    return (
+      <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${
+        hasAccess ? "bg-green-100 text-green-800" : "bg-gray-100 text-gray-400"
+      }`}>
+        {hasAccess ? "Yes" : "No"}
+      </span>
+    );
+  };
+
+  if (loading) {
+    return (
+      <div className="flex justify-center items-center py-12">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-ilp-navy"></div>
+      </div>
+    );
+  }
+
+  return (
+    <div>
+      {/* Add Role Form */}
+      <div className="bg-gray-50 p-4 rounded-lg mb-6">
+        <h3 className="text-lg font-medium mb-4">Create New Role</h3>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div>
+            <Label htmlFor="newRoleName">Role Name</Label>
+            <Input
+              id="newRoleName"
+              value={newRoleName}
+              onChange={(e) => setNewRoleName(e.target.value)}
+              placeholder="Enter role name"
+              className="mt-1"
+            />
+          </div>
+          <div className="md:col-span-2">
+            <Label htmlFor="newRoleDescription">Description</Label>
+            <Input
+              id="newRoleDescription"
+              value={newRoleDescription}
+              onChange={(e) => setNewRoleDescription(e.target.value)}
+              placeholder="Enter role description"
+              className="mt-1"
+            />
+          </div>
+        </div>
+        <Button 
+          onClick={handleAddRole} 
+          className="mt-4 bg-ilp-navy hover:bg-ilp-navy/90"
+          disabled={isAddingRole || !newRoleName.trim()}
+        >
+          {isAddingRole ? (
+            <>
+              <span className="mr-2">Adding...</span>
+              <div className="h-4 w-4 border-2 border-current border-t-transparent rounded-full animate-spin"></div>
+            </>
+          ) : (
+            <>Add Role</>
+          )}
+        </Button>
+      </div>
+
+      {/* Roles List */}
+      <div className="mt-6">
+        <h3 className="text-lg font-medium mb-4">System Roles</h3>
+        <div className="overflow-x-auto">
+          <table className="min-w-full divide-y divide-gray-200">
+            <thead className="bg-gray-50">
+              <tr>
+                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Role
+                </th>
+                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Description
+                </th>
+                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Page Access
+                </th>
+                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Created
+                </th>
+                <th scope="col" className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Actions
+                </th>
+              </tr>
+            </thead>
+            <tbody className="bg-white divide-y divide-gray-200">
+              {roles.map((role) => (
+                <tr key={role.id}>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    {getRoleBadge(role)}
+                    <span className="block text-xs text-gray-500 mt-1">{role.id}</span>
+                  </td>
+                  <td className="px-6 py-4">
+                    <span className="text-sm text-gray-900">{role.description}</span>
+                  </td>
+                  <td className="px-6 py-4">
+                    <div className="flex flex-wrap gap-1">
+                      {role.id === "ADMIN" ? (
+                        <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-orange-100 text-orange-800">
+                          Full Access
+                        </span>
+                      ) : (
+                        <div className="grid grid-cols-2 gap-1">
+                          {availablePages.slice(0, 4).map((page) => (
+                            <div key={page.id} className="flex items-center gap-1">
+                              <span className="text-xs">{page.name}:</span>
+                              <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${
+                                role.pageAccess?.[page.id] === true ? "bg-green-100 text-green-800" : "bg-gray-100 text-gray-400"
+                              }`}>
+                                {role.pageAccess?.[page.id] === true ? "Yes" : "No"}
+                              </span>
+                            </div>
+                          ))}
+                          {role.pageAccess && Object.keys(role.pageAccess).length > 4 && (
+                            <div className="col-span-2 mt-1">
+                              <span className="text-xs text-blue-500 cursor-pointer" onClick={() => openEditDialog(role)}>
+                                + {Object.keys(role.pageAccess).length - 4} more
+                              </span>
+                            </div>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                    {role.createdAt && typeof role.createdAt.toDate === 'function' 
+                      ? format(role.createdAt.toDate(), "yyyy-MM-dd") 
+                      : role.createdAt 
+                        ? format(new Date(role.createdAt), "yyyy-MM-dd")
+                        : "N/A"
+                    }
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                    <div className="flex justify-end gap-2">
+                      <Button 
+                        onClick={() => openEditDialog(role)} 
+                        size="sm" 
+                        variant="outline"
+                        className="text-blue-600 hover:text-blue-800"
+                      >
+                        {["ADMIN", "USER"].includes(role.id) ? "View" : "Edit"}
+                      </Button>
+                      {!["ADMIN", "USER"].includes(role.id) && (
+                        <Button 
+                          onClick={() => openDeleteDialog(role)} 
+                          size="sm" 
+                          variant="outline"
+                          className="text-red-600 hover:text-red-800"
+                        >
+                          Delete
+                        </Button>
+                      )}
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+        
+        {roles.length === 0 && (
+          <div className="text-center py-8">
+            <p className="text-gray-500">No roles found</p>
+          </div>
+        )}
+      </div>
+
+      {/* Edit Role Dialog */}
+      <Dialog open={editDialogOpen} onOpenChange={setEditDialogOpen}>
+        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>{selectedRole?.id === 'ADMIN' ? 'View Admin Role' : 'Edit Role'}</DialogTitle>
+            <DialogDescription>
+              {selectedRole?.id === 'ADMIN' 
+                ? 'Admin role has full access to all pages and features. Some settings cannot be modified.'
+                : 'Customize role name, description, and page access permissions.'}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-6 py-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="editRoleName">Role Name</Label>
+                <Input
+                  id="editRoleName"
+                  value={editedRoleName}
+                  onChange={(e) => setEditedRoleName(e.target.value)}
+                  placeholder="Enter role name"
+                  disabled={["ADMIN", "USER"].includes(selectedRole?.id || "")}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="editRoleDescription">Description</Label>
+                <Input
+                  id="editRoleDescription"
+                  value={editedRoleDescription}
+                  onChange={(e) => setEditedRoleDescription(e.target.value)}
+                  placeholder="Enter role description"
+                  disabled={["ADMIN", "USER"].includes(selectedRole?.id || "")}
+                />
+              </div>
+            </div>
+            
+            {/* Page Access Permission Section */}
+            <div className="space-y-4">
+              <div className="flex justify-between items-center">
+                <Label className="text-base font-medium">Page Access Permissions</Label>
+                {selectedRole?.id !== 'ADMIN' && (
+                  <div className="flex gap-2 text-xs">
+                    <Badge className="bg-green-100 text-green-800">Has Access</Badge>
+                    <Badge className="bg-gray-100 text-gray-400">No Access</Badge>
+                  </div>
+                )}
+              </div>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {availablePages.map((page) => (
+                  <div 
+                    key={page.id} 
+                    className={`flex items-start space-x-3 p-3 rounded-md ${
+                      editedPageAccess[page.id] ? "bg-green-50" : "bg-gray-50"
+                    }`}
+                  >
+                    <Switch
+                      checked={editedPageAccess[page.id] || false}
+                      onCheckedChange={() => togglePageAccess(page.id)}
+                      disabled={selectedRole?.id === 'ADMIN' || (page.id === 'dashboard' || page.id === 'profile')}
+                      id={`page-access-${page.id}`}
+                    />
+                    <div className="space-y-1">
+                      <Label 
+                        htmlFor={`page-access-${page.id}`}
+                        className="font-medium"
+                      >
+                        {page.name}
+                        {(page.id === 'dashboard' || page.id === 'profile') && (
+                          <span className="ml-2 text-xs text-blue-500">(Required)</span>
+                        )}
+                      </Label>
+                      <p className="text-xs text-gray-500">{page.description}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+          <DialogFooter className="gap-2 sm:gap-0">
+            <Button variant="outline" onClick={() => setEditDialogOpen(false)}>
+              Cancel
+            </Button>
+            <Button 
+              onClick={handleUpdateRole}
+              disabled={["ADMIN"].includes(selectedRole?.id || "")}
+            >
+              Save Changes
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete Role Dialog */}
+      <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Delete Role</DialogTitle>
+          </DialogHeader>
+          <div className="py-4">
+            <p className="text-gray-700">
+              Are you sure you want to delete the role "{selectedRole?.name}"? This action cannot be undone.
+            </p>
+            {["ADMIN", "USER"].includes(selectedRole?.id || "") && (
+              <p className="text-red-600 mt-4">
+                System roles cannot be deleted.
+              </p>
+            )}
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setDeleteDialogOpen(false)}>
+              Cancel
+            </Button>
+            <Button 
+              variant="destructive" 
+              onClick={handleDeleteRole}
+              disabled={["ADMIN", "USER"].includes(selectedRole?.id || "")}
+            >
+              Delete Role
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
@@ -3049,16 +3845,9 @@ const Settings = () => {
         <TabsContent value="roleManagement">
           <div className="bg-white rounded-lg shadow-md p-6 mb-6">
             <h2 className="text-xl font-semibold mb-4">Role Management</h2>
-            <p className="text-gray-600 mb-6">Manage user roles and permissions in the system.</p>
+            <p className="text-gray-600 mb-6">Create, edit, and delete roles to manage user permissions in the system.</p>
             
-            <div className="flex flex-col items-center justify-center py-12 bg-gray-50 rounded-lg">
-              <Shield className="h-16 w-16 text-gray-400 mb-4" />
-              <h3 className="text-xl font-medium text-gray-700 mb-2">Coming Soon</h3>
-              <p className="text-gray-500 text-center max-w-md">
-                Role management functionality is currently under development. 
-                This feature will allow you to create and manage roles with specific permissions.
-              </p>
-            </div>
+            <RoleManagement />
           </div>
         </TabsContent>
         

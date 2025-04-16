@@ -1,7 +1,23 @@
 import { useAuth } from "@/contexts/AuthContext";
 
 const Profile = () => {
-  const { currentUser } = useAuth();
+  const { currentUser, userRole } = useAuth();
+  
+  // Function to get role badge color based on role
+  const getRoleBadgeColor = (role: string | null) => {
+    switch (role) {
+      case 'ADMIN':
+        return 'bg-orange-100 text-orange-800';
+      case 'GATE':
+        return 'bg-blue-100 text-blue-800';
+      case 'WEIGHBRIDGE':
+        return 'bg-purple-100 text-purple-800';
+      case 'DOCK':
+        return 'bg-green-100 text-green-800';
+      default:
+        return 'bg-gray-100 text-gray-800';
+    }
+  };
   
   return (
     <div className="container mx-auto py-8 px-4">
@@ -15,6 +31,13 @@ const Profile = () => {
           <div>
             <h2 className="text-xl font-semibold">{currentUser?.email?.split('@')[0] || 'User'}</h2>
             <p className="text-gray-500">{currentUser?.email}</p>
+            
+            {/* User Role Badge */}
+            {userRole && (
+              <span className={`mt-2 inline-block text-sm font-medium py-1 px-3 rounded-full ${getRoleBadgeColor(userRole)}`}>
+                {userRole}
+              </span>
+            )}
           </div>
         </div>
         
@@ -24,6 +47,10 @@ const Profile = () => {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
               <p className="text-gray-500">Email</p>
               <p>{currentUser?.email}</p>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+              <p className="text-gray-500">Role</p>
+              <p>{userRole || 'User'}</p>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
               <p className="text-gray-500">Account created</p>
