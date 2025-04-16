@@ -19,6 +19,7 @@ import ShiftHandover from "@/pages/ShiftHandover";
 import WeighBridge from "@/pages/WeighBridge";
 import NotFound from "@/pages/NotFound";
 import Dock from "@/pages/Dock";
+import Exit from "@/pages/Exit";
 
 const queryClient = new QueryClient();
 
@@ -99,6 +100,14 @@ const App = () => (
               </ProtectedRoute>
             }>
               <Route index element={<Dock />} />
+            </Route>
+            
+            <Route path="/exit" element={
+              <ProtectedRoute>
+                <DashboardLayout />
+              </ProtectedRoute>
+            }>
+              <Route index element={<Exit />} />
             </Route>
             
             <Route path="*" element={<NotFound />} />

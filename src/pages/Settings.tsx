@@ -5,7 +5,24 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { PlusCircle, X, ShieldAlert, CheckCircle2, XCircle, Trash2, RefreshCw, Search, Truck, ShieldCheck, Scale, Warehouse, Users, Shield } from "lucide-react";
+import { 
+  PlusCircle, 
+  X, 
+  ShieldAlert, 
+  CheckCircle2, 
+  XCircle, 
+  Trash2, 
+  RefreshCw, 
+  Search, 
+  Truck, 
+  ShieldCheck, 
+  Scale, 
+  Warehouse, 
+  Users, 
+  Shield, 
+  Clock,
+  Info
+} from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { db } from "@/lib/firebase";
 import { 
@@ -2345,6 +2362,7 @@ const RoleManagement = () => {
     { id: "shift-handover", name: "Shift Handover", description: "Handle shift changes and handovers" },
     { id: "weigh-bridge", name: "Weigh Bridge", description: "Manage weight measurements" },
     { id: "dock", name: "Dock", description: "Dock management and operations" },
+    { id: "exit", name: "Exit", description: "Manage truck exit process" },
     { id: "settings", name: "Settings", description: "System settings and configuration" },
     { id: "profile", name: "Profile", description: "User profile management" }
   ];
@@ -2381,6 +2399,7 @@ const RoleManagement = () => {
               "shift-handover": true,
               "weigh-bridge": true,
               "dock": true,
+              "exit": true,
               "settings": true,
               "profile": true
             },
@@ -2396,6 +2415,7 @@ const RoleManagement = () => {
             pageAccess: {
               "dashboard": true,
               "truck-entry": true,
+              "exit": true,
               "shift-handover": true,
               "profile": true
             },
@@ -2426,6 +2446,7 @@ const RoleManagement = () => {
             pageAccess: {
               "dashboard": true,
               "dock": true,
+              "exit": true,
               "shift-handover": true,
               "profile": true
             },
@@ -3380,39 +3401,45 @@ const Settings = () => {
       <h1 className="text-2xl font-bold mb-6">System Settings</h1>
       
       <Tabs defaultValue="transporter">
-        <TabsList className="flex flex-wrap mb-6 gap-1">
-          <TabsTrigger value="transporter" className="flex items-center gap-1">
-            <Truck className="h-4 w-4" />
-            <span>Transporter</span> 
-          </TabsTrigger>
-          <TabsTrigger value="approvals" className="flex items-center gap-1">
-            <ShieldCheck className="h-4 w-4" />
-            <span>Approvals</span>
-          </TabsTrigger>
-          <TabsTrigger value="truckManagement" className="flex items-center gap-1">
-            <Truck className="h-4 w-4" />
-            <span>Truck Management</span>
-          </TabsTrigger>
-          <TabsTrigger value="weighbridge" className="flex items-center gap-1">
-            <Scale className="h-4 w-4" />
-            <span>Weighbridge</span>
-          </TabsTrigger>
-          <TabsTrigger value="safetyEquipment" className="flex items-center gap-1">
-            <ShieldAlert className="h-4 w-4" />
-            <span>Safety Equipment</span>
-          </TabsTrigger>
-          <TabsTrigger value="docks" className="flex items-center gap-1">
-            <Warehouse className="h-5 w-5" />
-            <span>Dock Management</span>
-          </TabsTrigger>
-          <TabsTrigger value="roleManagement" className="flex items-center gap-1">
-            <Shield className="h-4 w-4" />
-            <span>Role Management</span>
-          </TabsTrigger>
-          <TabsTrigger value="userManagement" className="flex items-center gap-1">
-            <Users className="h-4 w-4" />
-            <span>User Management</span>
-          </TabsTrigger>
+        <TabsList className="w-full mb-6 p-1 border-b bg-gray-50 rounded-t-lg">
+          <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-9 gap-2 w-full">
+            <TabsTrigger value="transporter" className="flex items-center justify-center gap-1 py-2 px-3 text-sm">
+              <Truck className="h-4 w-4" />
+              <span>Transporter</span> 
+            </TabsTrigger>
+            <TabsTrigger value="approvals" className="flex items-center justify-center gap-1 py-2 px-3 text-sm">
+              <ShieldCheck className="h-4 w-4" />
+              <span>Approvals</span>
+            </TabsTrigger>
+            <TabsTrigger value="truckManagement" className="flex items-center justify-center gap-1 py-2 px-3 text-sm">
+              <Truck className="h-4 w-4" />
+              <span>Truck Mgmt</span>
+            </TabsTrigger>
+            <TabsTrigger value="weighbridge" className="flex items-center justify-center gap-1 py-2 px-3 text-sm">
+              <Scale className="h-4 w-4" />
+              <span>Weighbridge</span>
+            </TabsTrigger>
+            <TabsTrigger value="tatManagement" className="flex items-center justify-center gap-1 py-2 px-3 text-sm">
+              <Clock className="h-4 w-4" />
+              <span>TAT Mgmt</span>
+            </TabsTrigger>
+            <TabsTrigger value="safetyEquipment" className="flex items-center justify-center gap-1 py-2 px-3 text-sm">
+              <ShieldAlert className="h-4 w-4" />
+              <span>Safety Equip</span>
+            </TabsTrigger>
+            <TabsTrigger value="docks" className="flex items-center justify-center gap-1 py-2 px-3 text-sm">
+              <Warehouse className="h-4 w-4" />
+              <span>Dock Mgmt</span>
+            </TabsTrigger>
+            <TabsTrigger value="roleManagement" className="flex items-center justify-center gap-1 py-2 px-3 text-sm">
+              <Shield className="h-4 w-4" />
+              <span>Role Mgmt</span>
+            </TabsTrigger>
+            <TabsTrigger value="userManagement" className="flex items-center justify-center gap-1 py-2 px-3 text-sm">
+              <Users className="h-4 w-4" />
+              <span>User Mgmt</span>
+            </TabsTrigger>
+          </div>
         </TabsList>
         
         <TabsContent value="transporter">
@@ -3772,6 +3799,10 @@ const Settings = () => {
           <WeighbridgeSettings />
         </TabsContent>
         
+        <TabsContent value="tatManagement">
+          <TATSettings />
+        </TabsContent>
+        
         <TabsContent value="safetyEquipment">
           <div className="bg-white rounded-lg shadow-md p-6 mb-6">
             <h2 className="text-xl font-semibold mb-4">Safety Equipment Inventory</h2>
@@ -3899,6 +3930,323 @@ const Settings = () => {
           Save Changes
         </Button>
       </div>
+    </div>
+  );
+};
+
+// TATSettings component
+const TATSettings = () => {
+  const { toast } = useToast();
+  const { currentUser } = useAuth();
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  
+  // TAT settings state
+  const [fgTAT, setFgTAT] = useState(180); // 3 hours in minutes as default
+  const [rmTAT, setRmTAT] = useState(180); // 3 hours in minutes as default
+  const [pmTAT, setPmTAT] = useState(180); // 3 hours in minutes as default
+  const [defaultTAT, setDefaultTAT] = useState(180); // 3 hours in minutes as default
+  
+  // Warning threshold (percentage beyond ideal TAT to highlight as warning)
+  const [warningThreshold, setWarningThreshold] = useState(20); // 20% default
+  
+  // Critical threshold (percentage beyond ideal TAT to highlight as critical)
+  const [criticalThreshold, setCriticalThreshold] = useState(50); // 50% default
+
+  // Fetch TAT settings on component mount
+  useEffect(() => {
+    fetchTATSettings();
+  }, []);
+
+  // Fetch TAT settings from Firestore
+  const fetchTATSettings = async () => {
+    if (!currentUser) return;
+    
+    try {
+      setLoading(true);
+      
+      const settingsRef = doc(db, "organizationSettings", "tatSettings");
+      const settingsDoc = await getDoc(settingsRef);
+      
+      if (settingsDoc.exists()) {
+        const data = settingsDoc.data();
+        
+        // Get TAT values with defaults if not set
+        setFgTAT(data.fgTAT || 180);
+        setRmTAT(data.rmTAT || 180);
+        setPmTAT(data.pmTAT || 180);
+        setDefaultTAT(data.defaultTAT || 180);
+        
+        // Get threshold values with defaults if not set
+        setWarningThreshold(data.warningThreshold || 20);
+        setCriticalThreshold(data.criticalThreshold || 50);
+      }
+    } catch (error) {
+      console.error("Error fetching TAT settings:", error);
+      toast({
+        title: "Error",
+        description: "Failed to load TAT settings. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Save TAT settings
+  const saveTATSettings = async () => {
+    if (!currentUser) return;
+    
+    try {
+      setSaving(true);
+      
+      // Validate inputs
+      if (warningThreshold >= criticalThreshold) {
+        toast({
+          title: "Invalid Settings",
+          description: "Warning threshold must be less than critical threshold.",
+          variant: "destructive",
+        });
+        return;
+      }
+      
+      // Ensure all TAT values are positive
+      if (fgTAT <= 0 || rmTAT <= 0 || pmTAT <= 0 || defaultTAT <= 0) {
+        toast({
+          title: "Invalid Settings",
+          description: "All TAT values must be greater than zero.",
+          variant: "destructive",
+        });
+        return;
+      }
+      
+      const settingsRef = doc(db, "organizationSettings", "tatSettings");
+      
+      await setDoc(settingsRef, {
+        fgTAT: fgTAT,
+        rmTAT: rmTAT,
+        pmTAT: pmTAT,
+        defaultTAT: defaultTAT,
+        warningThreshold: warningThreshold,
+        criticalThreshold: criticalThreshold,
+        updatedAt: serverTimestamp(),
+        updatedBy: currentUser.uid
+      }, { merge: true });
+      
+      toast({
+        title: "Settings Saved",
+        description: "TAT settings have been updated successfully."
+      });
+    } catch (error) {
+      console.error("Error saving TAT settings:", error);
+      toast({
+        title: "Error",
+        description: "Failed to save TAT settings. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  // Format minutes to hours and minutes
+  const formatMinutesToHM = (minutes: number) => {
+    const hours = Math.floor(minutes / 60);
+    const mins = minutes % 60;
+    return `${hours}h ${mins}m`;
+  };
+
+  return (
+    <div className="bg-white rounded-lg shadow-md p-6">
+      <div className="flex justify-between items-center mb-4">
+        <div>
+          <h2 className="text-xl font-semibold">Turnaround Time (TAT) Settings</h2>
+          <p className="text-gray-600">Configure the ideal turnaround times for different material types</p>
+        </div>
+        <Button 
+          onClick={saveTATSettings}
+          disabled={saving}
+          className="flex items-center gap-1"
+        >
+          {saving ? (
+            <>
+              <RefreshCw className="h-4 w-4 animate-spin" />
+              <span>Saving...</span>
+            </>
+          ) : (
+            <span>Save Changes</span>
+          )}
+        </Button>
+      </div>
+
+      {loading ? (
+        <div className="flex justify-center py-8">
+          <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-blue-600"></div>
+        </div>
+      ) : (
+        <div className="space-y-6">
+          <div>
+            <h3 className="text-lg font-medium mb-4">Ideal Turnaround Times</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="space-y-4">
+                <div>
+                  <Label htmlFor="fgTAT" className="block mb-1">
+                    FG Material (Finished Goods) - Current: {formatMinutesToHM(fgTAT)}
+                  </Label>
+                  <div className="flex items-center gap-2">
+                    <Input
+                      id="fgTAT"
+                      type="number"
+                      value={fgTAT}
+                      onChange={(e) => setFgTAT(parseInt(e.target.value) || 0)}
+                      min="1"
+                      className="w-24"
+                    />
+                    <span className="text-gray-500">minutes</span>
+                  </div>
+                </div>
+                
+                <div>
+                  <Label htmlFor="rmTAT" className="block mb-1">
+                    RM Material (Raw Materials) - Current: {formatMinutesToHM(rmTAT)}
+                  </Label>
+                  <div className="flex items-center gap-2">
+                    <Input
+                      id="rmTAT"
+                      type="number"
+                      value={rmTAT}
+                      onChange={(e) => setRmTAT(parseInt(e.target.value) || 0)}
+                      min="1"
+                      className="w-24"
+                    />
+                    <span className="text-gray-500">minutes</span>
+                  </div>
+                </div>
+              </div>
+              
+              <div className="space-y-4">
+                <div>
+                  <Label htmlFor="pmTAT" className="block mb-1">
+                    PM Material (Packaging Materials) - Current: {formatMinutesToHM(pmTAT)}
+                  </Label>
+                  <div className="flex items-center gap-2">
+                    <Input
+                      id="pmTAT"
+                      type="number"
+                      value={pmTAT}
+                      onChange={(e) => setPmTAT(parseInt(e.target.value) || 0)}
+                      min="1"
+                      className="w-24"
+                    />
+                    <span className="text-gray-500">minutes</span>
+                  </div>
+                </div>
+                
+                <div>
+                  <Label htmlFor="defaultTAT" className="block mb-1">
+                    Default (Other Materials) - Current: {formatMinutesToHM(defaultTAT)}
+                  </Label>
+                  <div className="flex items-center gap-2">
+                    <Input
+                      id="defaultTAT"
+                      type="number"
+                      value={defaultTAT}
+                      onChange={(e) => setDefaultTAT(parseInt(e.target.value) || 0)}
+                      min="1"
+                      className="w-24"
+                    />
+                    <span className="text-gray-500">minutes</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <div className="border-t pt-6">
+            <h3 className="text-lg font-medium mb-4">TAT Threshold Settings</h3>
+            <p className="text-gray-600 mb-4">
+              Configure when to highlight trucks that exceed the ideal turnaround time
+            </p>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div>
+                <Label htmlFor="warningThreshold" className="block mb-1">
+                  Warning Threshold (% over ideal TAT)
+                </Label>
+                <div className="flex items-center gap-2">
+                  <Input
+                    id="warningThreshold"
+                    type="number"
+                    value={warningThreshold}
+                    onChange={(e) => setWarningThreshold(parseInt(e.target.value) || 0)}
+                    min="1"
+                    max="100"
+                    className="w-24"
+                  />
+                  <span className="text-gray-500">%</span>
+                </div>
+                <p className="text-sm text-gray-500 mt-1">
+                  Trucks exceeding the ideal TAT by this percentage will be highlighted with yellow.
+                </p>
+              </div>
+              
+              <div>
+                <Label htmlFor="criticalThreshold" className="block mb-1">
+                  Critical Threshold (% over ideal TAT)
+                </Label>
+                <div className="flex items-center gap-2">
+                  <Input
+                    id="criticalThreshold"
+                    type="number"
+                    value={criticalThreshold}
+                    onChange={(e) => setCriticalThreshold(parseInt(e.target.value) || 0)}
+                    min="1"
+                    max="200"
+                    className="w-24"
+                  />
+                  <span className="text-gray-500">%</span>
+                </div>
+                <p className="text-sm text-gray-500 mt-1">
+                  Trucks exceeding the ideal TAT by this percentage will be highlighted with red.
+                </p>
+              </div>
+            </div>
+          </div>
+          
+          <div className="bg-blue-50 p-4 rounded-md border border-blue-200">
+            <div className="flex gap-2">
+              <div className="text-blue-600">
+                <Info className="h-5 w-5" />
+              </div>
+              <div>
+                <h4 className="text-sm font-medium text-blue-800">How it works</h4>
+                <p className="text-sm text-blue-700">
+                  The system will calculate the TAT for exited trucks as the time between arrival and exit. 
+                  Trucks that exceed the ideal TAT for their material type will be highlighted in the Exit page 
+                  according to the thresholds defined above.
+                </p>
+              </div>
+            </div>
+          </div>
+          
+          <div className="pt-4 flex justify-end">
+            <Button
+              onClick={saveTATSettings}
+              disabled={saving}
+              className="flex items-center gap-1"
+            >
+              {saving ? (
+                <>
+                  <RefreshCw className="h-4 w-4 animate-spin" />
+                  <span>Saving...</span>
+                </>
+              ) : (
+                <span>Save Changes</span>
+              )}
+            </Button>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

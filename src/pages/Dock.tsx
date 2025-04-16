@@ -29,7 +29,8 @@ import {
   LogIn,
   Pause,
   ParkingCircle,
-  ParkingSquare
+  ParkingSquare,
+  Scale
 } from "lucide-react";
 import { 
   Select,
@@ -98,6 +99,7 @@ interface Truck {
   entryStatus?: "allowed" | "held" | "external_parking";
   reasonForHold?: string;
   channelType?: "green" | "orange";
+  plannedDestination?: string;
 }
 
 // Define Dock interface for managing dock settings
@@ -108,7 +110,7 @@ interface Dock {
 }
 
 type TruckStatus = "At Gate" | "Inside" | "Upcoming" | "Internal Parking";
-type ActionType = "allow" | "hold" | "external";
+type ActionType = "allow" | "hold" | "external" | "weighbridge";
 
 const Dock = () => {
   const { toast } = useToast();
@@ -323,6 +325,21 @@ const Dock = () => {
     return "Pending Action";
   };
 
+  // Get action details for already taken actions
+  const getActionDetails = (truck: Truck) => {
+    if (truck.entryStatus === "allowed") {
+      if (truck.plannedDestination === "Internal Parking") {
+        return "Sent to Internal Parking";
+      } else if (truck.dockAssigned) {
+        return `Dock ${truck.dockAssigned} assigned`;
+      }
+      return "Entry allowed";
+    }
+    if (truck.entryStatus === "held") return "Entry held";
+    if (truck.entryStatus === "external_parking") return "Sent to external parking";
+    return "";
+  };
+
   // Fetch dock settings from transporterSettings
   const fetchDockSettings = async () => {
     try {
@@ -401,22 +418,8 @@ const Dock = () => {
       if (actionType === "allow") {
         if (!selectedDock) {
           toast({
-            title: "Dock Required",
-            description: "Please select a dock to allow entry.",
-            variant: "destructive",
-          });
-          return;
-        }
-        
-        // Validate that the selected dock exists and is serviceable
-        const dockExists = availableDocks.some(
-          dock => dock.name === selectedDock && dock.isServiceable
-        );
-        
-        if (!dockExists) {
-          toast({
-            title: "Invalid Dock Selection",
-            description: "The selected dock is no longer available or serviceable. Please select another dock.",
+            title: "Destination Required",
+            description: "Please select a destination (dock or internal parking) to allow entry.",
             variant: "destructive",
           });
           return;
@@ -424,10 +427,32 @@ const Dock = () => {
         
         // Update truck for entry allowed - keeping status as "At Gate"
         updateData.entryStatus = "allowed";
-        updateData.dockAssigned = selectedDock;
-        updateData.dockStatus = "pending";
         updateData.entryApprovedAt = serverTimestamp();
         updateData.entryApprovedBy = currentUser.uid;
+        
+        // If internal parking is selected
+        if (selectedDock === "InternalParking") {
+          updateData.nextMilestone = "InternalParking";
+          updateData.plannedDestination = "Internal Parking";
+        } else {
+          // Validate that the selected dock exists and is serviceable
+          const dockExists = availableDocks.some(
+            dock => dock.name === selectedDock && dock.isServiceable
+          );
+          
+          if (!dockExists) {
+            toast({
+              title: "Invalid Dock Selection",
+              description: "The selected dock is no longer available or serviceable. Please select another dock.",
+              variant: "destructive",
+            });
+            return;
+          }
+          
+          updateData.dockAssigned = selectedDock;
+          updateData.dockStatus = "pending";
+          updateData.plannedDestination = selectedDock;
+        }
       } 
       else if (actionType === "hold") {
         if (!holdReason) {
@@ -451,13 +476,22 @@ const Dock = () => {
         updateData.externalParkingAt = serverTimestamp();
         updateData.externalParkingBy = currentUser.uid;
       }
+      else if (actionType === "weighbridge") {
+        // Update truck to send to weighbridge
+        updateData.nextMilestone = "WeighBridge";
+        updateData.sentToWeighbridgeAt = serverTimestamp();
+        updateData.sentToWeighbridgeBy = currentUser.uid;
+      }
       
       await updateDoc(truckRef, updateData);
       
       const actionTexts = {
-        allow: "Entry allowed and dock assigned",
+        allow: selectedDock === "InternalParking" 
+              ? "Entry allowed and sent to Internal Parking" 
+              : `Entry allowed and dock ${selectedDock} assigned`,
         hold: "Entry held",
-        external: "Sent to external parking"
+        external: "Sent to external parking",
+        weighbridge: "Sent to weighbridge"
       };
       
       toast({
@@ -472,6 +506,13 @@ const Dock = () => {
         setTimeout(() => setActiveTab(prev), 0);
         return temp as TruckStatus;
       });
+      
+      // Additional refresh for weighbridge action to immediately update the Internal Parking table
+      if (actionType === "weighbridge") {
+        setTimeout(() => {
+          fetchTrucks();
+        }, 500);
+      }
       
       // Close the modal
       setActionModalOpen(false);
@@ -504,13 +545,16 @@ const Dock = () => {
             <DialogTitle>
               {actionType === "allow" ? "Allow Entry" : 
                actionType === "hold" ? "Hold Entry" : 
+               actionType === "weighbridge" ? "Send to Weighbridge" :
                "Send to External Parking"}
             </DialogTitle>
             <DialogDescription>
               {actionType === "allow" 
-                ? "Allow truck entry and assign a dock." 
+                ? "Allow truck entry and assign a destination (dock or internal parking)." 
                 : actionType === "hold" 
                 ? "Hold truck entry and provide a reason."
+                : actionType === "weighbridge"
+                ? "Send this truck from Internal Parking to the Weighbridge."
                 : "Send truck to external parking area."}
             </DialogDescription>
           </DialogHeader>
@@ -523,21 +567,45 @@ const Dock = () => {
           
           {actionType === "allow" && (
             <div className="space-y-3">
-              <Label htmlFor="dock-select">Select Dock</Label>
-              <Select value={selectedDock} onValueChange={setSelectedDock}>
-                <SelectTrigger id="dock-select">
-                  <SelectValue placeholder="Choose a dock" />
+              <Label htmlFor="destination-type">Select Destination</Label>
+              <Select 
+                value={selectedDock === "InternalParking" ? "internal-parking" : "dock"} 
+                onValueChange={(value) => {
+                  if (value === "internal-parking") {
+                    setSelectedDock("InternalParking");
+                  } else {
+                    setSelectedDock("");
+                  }
+                }}
+              >
+                <SelectTrigger id="destination-type">
+                  <SelectValue placeholder="Choose destination type" />
                 </SelectTrigger>
                 <SelectContent>
-                  {availableDocks
-                    .filter(dock => dock.isServiceable)
-                    .map(dock => (
-                      <SelectItem key={dock.id} value={dock.name}>
-                        {dock.name}
-                      </SelectItem>
-                    ))}
+                  <SelectItem value="dock">Assign to Dock</SelectItem>
+                  <SelectItem value="internal-parking">Send to Internal Parking</SelectItem>
                 </SelectContent>
               </Select>
+              
+              {selectedDock !== "InternalParking" && (
+                <>
+                  <Label htmlFor="dock-select" className="mt-3">Select Dock</Label>
+                  <Select value={selectedDock} onValueChange={setSelectedDock}>
+                    <SelectTrigger id="dock-select">
+                      <SelectValue placeholder="Choose a dock" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {availableDocks
+                        .filter(dock => dock.isServiceable)
+                        .map(dock => (
+                          <SelectItem key={dock.id} value={dock.name}>
+                            {dock.name}
+                          </SelectItem>
+                        ))}
+                    </SelectContent>
+                  </Select>
+                </>
+              )}
             </div>
           )}
           
@@ -557,6 +625,13 @@ const Dock = () => {
             <div className="p-4 bg-amber-50 rounded-md text-amber-800 text-sm">
               <p>Truck will be directed to external parking area.</p>
               <p>Please inform the driver about this decision.</p>
+            </div>
+          )}
+          
+          {actionType === "weighbridge" && (
+            <div className="p-4 bg-blue-50 rounded-md text-blue-800 text-sm">
+              <p>This truck will be sent from Internal Parking to the Weighbridge.</p>
+              <p>After confirmation, it will appear in the Weighbridge table.</p>
             </div>
           )}
           
@@ -610,7 +685,9 @@ const Dock = () => {
                 {activeTab === "At Gate" && (
                   <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Entry Status</th>
                 )}
-                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  {activeTab === "Inside" ? "Planned Dock/Internal Parking" : "Actions"}
+                </th>
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
@@ -800,6 +877,70 @@ const Dock = () => {
                     )}
                     <td className="px-6 py-4 whitespace-nowrap">
                       {activeTab === "At Gate" && (
+                        <div className="flex items-center">
+                          {truck.entryStatus && (
+                            <span className="text-xs text-gray-500 mr-2">{getActionDetails(truck)}</span>
+                          )}
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button 
+                                variant="ghost" 
+                                className="h-8 w-8 p-0"
+                                title={truck.entryStatus ? `Action already taken: ${getActionDetails(truck)}` : "Available actions"}
+                              >
+                                <MoreVertical className="h-4 w-4" />
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                              <DropdownMenuItem 
+                                className="cursor-pointer flex items-center"
+                                onClick={() => openActionModal(truck, "allow")}
+                                disabled={truck.entryStatus !== undefined}
+                              >
+                                <LogIn className="mr-2 h-4 w-4" />
+                                <span>Allow Entry</span>
+                              </DropdownMenuItem>
+                              <DropdownMenuItem 
+                                className="cursor-pointer flex items-center"
+                                onClick={() => openActionModal(truck, "hold")}
+                                disabled={truck.entryStatus !== undefined}
+                              >
+                                <Pause className="mr-2 h-4 w-4" />
+                                <span>Hold Entry</span>
+                              </DropdownMenuItem>
+                              <DropdownMenuItem 
+                                className="cursor-pointer flex items-center"
+                                onClick={() => openActionModal(truck, "external")}
+                                disabled={truck.entryStatus !== undefined}
+                              >
+                                <ParkingCircle className="mr-2 h-4 w-4" />
+                                <span>External Parking</span>
+                              </DropdownMenuItem>
+                              {truck.entryStatus && (
+                                <div className="px-2 py-1 text-xs text-gray-500 border-t mt-1">
+                                  Action already taken: {getActionDetails(truck)}
+                                </div>
+                              )}
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        </div>
+                      )}
+                      {activeTab === "Inside" && (truck.plannedDestination || truck.dockAssigned) && (
+                        <div className="text-sm">
+                          {truck.plannedDestination === "Internal Parking" ? (
+                            <Badge className="bg-green-100 text-green-800 flex items-center gap-1">
+                              <ParkingSquare className="h-3 w-3" />
+                              Internal Parking
+                            </Badge>
+                          ) : (
+                            <Badge className="bg-blue-100 text-blue-800 flex items-center gap-1">
+                              <LogIn className="h-3 w-3" />
+                              {truck.dockAssigned}
+                            </Badge>
+                          )}
+                        </div>
+                      )}
+                      {activeTab === "Internal Parking" && (
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
                             <Button variant="ghost" className="h-8 w-8 p-0">
@@ -809,35 +950,13 @@ const Dock = () => {
                           <DropdownMenuContent align="end">
                             <DropdownMenuItem 
                               className="cursor-pointer flex items-center"
-                              onClick={() => openActionModal(truck, "allow")}
-                              disabled={truck.entryStatus === "allowed"}
+                              onClick={() => openActionModal(truck, "weighbridge")}
                             >
-                              <LogIn className="mr-2 h-4 w-4" />
-                              <span>Allow Entry</span>
-                            </DropdownMenuItem>
-                            <DropdownMenuItem 
-                              className="cursor-pointer flex items-center"
-                              onClick={() => openActionModal(truck, "hold")}
-                              disabled={truck.entryStatus === "held"}
-                            >
-                              <Pause className="mr-2 h-4 w-4" />
-                              <span>Hold Entry</span>
-                            </DropdownMenuItem>
-                            <DropdownMenuItem 
-                              className="cursor-pointer flex items-center"
-                              onClick={() => openActionModal(truck, "external")}
-                              disabled={truck.entryStatus === "external_parking"}
-                            >
-                              <ParkingCircle className="mr-2 h-4 w-4" />
-                              <span>External Parking</span>
+                              <Scale className="mr-2 h-4 w-4" />
+                              <span>Send to Weighbridge</span>
                             </DropdownMenuItem>
                           </DropdownMenuContent>
                         </DropdownMenu>
-                      )}
-                      {activeTab === "Inside" && truck.dockAssigned && (
-                        <div className="text-sm text-blue-600 font-medium">
-                          {truck.dockAssigned}
-                        </div>
                       )}
                       {activeTab === "Upcoming" && (
                         <span className="text-gray-400">-</span>

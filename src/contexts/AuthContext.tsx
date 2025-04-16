@@ -84,6 +84,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             "shift-handover": true,
             "weigh-bridge": true,
             "dock": true,
+            "exit": true,
             "profile": true
           });
         } else {
@@ -114,7 +115,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
               setPageAccess({
                 "dashboard": true,
                 "settings": true,
-                "profile": true
+                "profile": true,
+                "exit": true
               });
             }
           } catch (roleError) {
@@ -123,7 +125,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             setPageAccess({
               "dashboard": true,
               "settings": true,
-              "profile": true
+              "profile": true,
+              "exit": true
             });
           }
         }
@@ -133,7 +136,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setPageAccess({
           "dashboard": true,
           "settings": true,
-          "profile": true
+          "profile": true,
+          "exit": true
         });
         
         // Attempt to create a default user document if it doesn't exist
@@ -157,7 +161,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setPageAccess({
         "dashboard": true,
         "settings": true,
-        "profile": true
+        "profile": true,
+        "exit": true
       });
     }
   };

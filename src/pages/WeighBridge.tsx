@@ -3,8 +3,8 @@ import { useToast } from "@/components/ui/use-toast";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { db } from "@/lib/firebase";
-import { collection, getDocs, query, where, orderBy } from "firebase/firestore";
-import { Search, RefreshCw, Scale, ClipboardList, CornerRightDown, CornerRightUp } from "lucide-react";
+import { collection, getDocs, query, where, orderBy, doc, updateDoc, serverTimestamp } from "firebase/firestore";
+import { Search, RefreshCw, Scale, ClipboardList, CornerRightDown, CornerRightUp, ExternalLink } from "lucide-react";
 import {
   Select,
   SelectContent,
@@ -26,6 +26,8 @@ import { format } from "date-fns";
 import WeighBridgeModal from "@/components/WeighBridgeModal";
 import OutgoingNonReturnableModal from "@/components/OutgoingNonReturnableModal";
 import OutgoingReturnableModal from "@/components/OutgoingReturnableModal";
+import ExitTruckModal from "@/components/ExitTruckModal";
+import { useAuth } from "@/contexts/AuthContext";
 
 // Truck collaboration data type
 interface TruckCollaboration {
@@ -58,6 +60,7 @@ interface TruckCollaboration {
 
 const WeighBridge = () => {
   const { toast } = useToast();
+  const { currentUser } = useAuth();
   const [trucks, setTrucks] = useState<TruckCollaboration[]>([]);
   const [loading, setLoading] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
@@ -84,6 +87,9 @@ const WeighBridge = () => {
   // Additional state for new modal types
   const [isOutgoingNonReturnableModalOpen, setIsOutgoingNonReturnableModalOpen] = useState(false);
   const [isOutgoingReturnableModalOpen, setIsOutgoingReturnableModalOpen] = useState(false);
+
+  // Exit truck modal state
+  const [isExitTruckModalOpen, setIsExitTruckModalOpen] = useState(false);
 
   // Fetch settings (transporters and depots)
   useEffect(() => {
@@ -230,6 +236,55 @@ const WeighBridge = () => {
   const closeOutgoingReturnableModal = () => {
     setIsOutgoingReturnableModalOpen(false);
     setSelectedTruck(null);
+  };
+
+  // Open Exit Truck modal
+  const openExitTruckModal = (truck: TruckCollaboration) => {
+    setSelectedTruck(truck);
+    setIsExitTruckModalOpen(true);
+  };
+
+  // Close Exit Truck modal
+  const closeExitTruckModal = () => {
+    setIsExitTruckModalOpen(false);
+    setSelectedTruck(null);
+  };
+
+  // Handle exit truck
+  const handleExitTruck = async (truckId: string) => {
+    if (!currentUser) return;
+    
+    try {
+      const truckDocRef = doc(db, "transporterCollaborations", truckId);
+      
+      // Update the truck status to "Exited" but keep the nextMilestone as "WeighBridge"
+      await updateDoc(truckDocRef, {
+        status: "Exited",
+        exitedAt: serverTimestamp(),
+        exitedBy: currentUser.uid,
+        lastUpdatedAt: serverTimestamp(),
+        lastUpdatedBy: currentUser.uid,
+        // We specifically don't change the nextMilestone so it remains "WeighBridge"
+        // This allows filtering for trucks exited from the weighbridge
+      });
+      
+      toast({
+        title: "Truck exited successfully",
+        description: "The truck has been marked as exited and will appear in the Weighbridge Exit page.",
+      });
+      
+      // Refresh the truck list
+      fetchTrucks();
+    } catch (error) {
+      console.error("Error exiting truck:", error);
+      toast({
+        title: "Error exiting truck",
+        description: "Failed to exit truck. Please try again later.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsExitTruckModalOpen(false);
+    }
   };
 
   return (
@@ -464,6 +519,15 @@ const WeighBridge = () => {
                               <CornerRightDown size={14} />
                               Outgoing Returnable
                             </Button>
+
+                            <Button 
+                              size="sm" 
+                              onClick={() => openExitTruckModal(truck)}
+                              className="bg-yellow-600 hover:bg-yellow-700 text-white flex items-center gap-1 text-xs py-1"
+                            >
+                              <ExternalLink size={14} />
+                              Exit Truck
+                            </Button>
                           </div>
                         </td>
                       </tr>
@@ -557,6 +621,13 @@ const WeighBridge = () => {
             onClose={closeOutgoingReturnableModal}
             truck={selectedTruck}
             onProcessingComplete={handleProcessingComplete}
+          />
+          
+          <ExitTruckModal
+            isOpen={isExitTruckModalOpen}
+            onClose={closeExitTruckModal}
+            truck={selectedTruck}
+            onConfirm={handleExitTruck}
           />
         </>
       )}

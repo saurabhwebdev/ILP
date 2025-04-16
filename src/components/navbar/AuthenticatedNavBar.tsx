@@ -13,7 +13,8 @@ import {
   Users,
   Repeat,
   Scale,
-  Warehouse
+  Warehouse,
+  ExternalLink
 } from "lucide-react";
 
 // Navigation items definition
@@ -24,6 +25,7 @@ const navigationItems = [
   { path: "/shift-handover", label: "Shift Handover", icon: Repeat, accessKey: "shift-handover" },
   { path: "/weigh-bridge", label: "Weigh Bridge", icon: Scale, accessKey: "weigh-bridge" },
   { path: "/dock", label: "Dock", icon: Warehouse, accessKey: "dock" },
+  { path: "/exit", label: "Exit", icon: ExternalLink, accessKey: "exit" },
   { path: "/profile", label: "Profile", icon: User, accessKey: "profile" },
   { path: "/settings", label: "Settings", icon: Settings, accessKey: "settings" }
 ];

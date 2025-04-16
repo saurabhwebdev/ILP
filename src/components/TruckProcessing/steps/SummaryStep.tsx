@@ -11,7 +11,25 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 interface SummaryStepProps {
   formData: ProcessingFormData;
   updateFormData: (data: Partial<ProcessingFormData>) => void;
-  truck: any; // TruckCollaboration | null
+  truck: {
+    id?: string;
+    vehicleNumber?: string;
+    driverName?: string;
+    driverMobile?: string;
+    transporter?: string;
+    depotName?: string;
+    materialType?: string;
+    arrivalDateTime?: any;
+    status?: string;
+    rtoCapacity?: string;
+    loadingCapacity?: string;
+    supplierName?: string;
+    lrNumber?: string;
+    createdAt?: any;
+    isTransshipment?: boolean;
+    plannedDestination?: string;
+    [key: string]: any;
+  } | null;
 }
 
 const SummaryStep = ({ formData, updateFormData, truck }: SummaryStepProps) => {

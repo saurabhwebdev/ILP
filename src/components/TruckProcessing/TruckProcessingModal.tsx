@@ -39,6 +39,7 @@ interface TruckCollaboration {
   isTransshipment?: boolean;
   originalTruckInfo?: any;
   processingDraft?: ProcessingFormData;
+  plannedDestination?: string;
 }
 
 // Stepper types
@@ -122,6 +123,17 @@ const TruckProcessingModal = ({ isOpen, onClose, truck, onProcessingComplete }: 
   const { toast } = useToast();
   const { currentUser } = useAuth();
   
+  // Determine initial nextMilestone based on truck.plannedDestination if available
+  const getInitialNextMilestone = () => {
+    console.log("TruckProcessingModal - Initializing with truck:", truck);
+    if (truck?.plannedDestination === "Internal Parking") {
+      console.log("TruckProcessingModal - Initial nextMilestone set to InternalParking");
+      return "InternalParking";
+    }
+    // Default is null, will be set later if needed
+    return null;
+  };
+  
   // Current step state
   const [currentStep, setCurrentStep] = useState(0);
   const steps = ["Document Check", "Vehicle & Risk Check", "Upload Documents", "Summary"];
@@ -179,7 +191,7 @@ const TruckProcessingModal = ({ isOpen, onClose, truck, onProcessingComplete }: 
     // Summary
     processingCompleted: false,
     finalRemarks: "",
-    nextMilestone: null,
+    nextMilestone: getInitialNextMilestone(),
   });
 
   // Loading state
@@ -189,6 +201,9 @@ const TruckProcessingModal = ({ isOpen, onClose, truck, onProcessingComplete }: 
   // Load any existing draft data when the modal opens
   useEffect(() => {
     if (isOpen && truck?.id) {
+      console.log("TruckProcessingModal - Modal opened for truck:", truck.id);
+      console.log("TruckProcessingModal - Truck data:", truck);
+      console.log("TruckProcessingModal - Truck plannedDestination:", truck.plannedDestination);
       loadDraftData();
     }
   }, [isOpen, truck?.id]);
@@ -225,18 +240,35 @@ const TruckProcessingModal = ({ isOpen, onClose, truck, onProcessingComplete }: 
     
     try {
       setIsLoading(true);
+      console.log("TruckProcessingModal - Loading draft data for truck:", truck);
+      console.log("TruckProcessingModal - Truck plannedDestination:", truck.plannedDestination);
+      
       const truckRef = doc(db, "transporterCollaborations", truck.id);
       const truckDoc = await getDoc(truckRef);
       
       if (truckDoc.exists()) {
         const truckData = truckDoc.data() as TruckCollaboration;
+        console.log("TruckProcessingModal - Firestore data:", truckData);
+        
         if (truckData.processingDraft) {
           // Restore the draft data
+          console.log("TruckProcessingModal - Found processing draft:", truckData.processingDraft);
           setFormData(truckData.processingDraft);
           toast({
             title: "Draft Loaded",
             description: "Your previous work has been restored.",
           });
+        } else {
+          // If no draft but the truck has plannedDestination, set it in the formData
+          if (truckData.plannedDestination && !formData.nextMilestone) {
+            console.log("TruckProcessingModal - Initializing nextMilestone from plannedDestination:", truckData.plannedDestination);
+            
+            if (truckData.plannedDestination === "Internal Parking") {
+              updateFormData({ nextMilestone: "InternalParking" });
+            } else {
+              updateFormData({ nextMilestone: "WeighBridge" });
+            }
+          }
         }
       }
     } catch (error) {
@@ -277,6 +309,13 @@ const TruckProcessingModal = ({ isOpen, onClose, truck, onProcessingComplete }: 
   
   // Update form data
   const updateFormData = (data: Partial<ProcessingFormData>) => {
+    console.log("TruckProcessingModal - Updating form data:", data);
+    
+    // Handle the special case of setting nextMilestone
+    if (data.nextMilestone !== undefined) {
+      console.log("TruckProcessingModal - Updating nextMilestone to:", data.nextMilestone);
+    }
+    
     setFormData(prev => ({ ...prev, ...data }));
   };
   
@@ -285,6 +324,8 @@ const TruckProcessingModal = ({ isOpen, onClose, truck, onProcessingComplete }: 
     if (currentStep < steps.length - 1) {
       // Save the current step data before moving to the next
       await saveDraftData();
+      console.log(`TruckProcessingModal - Moving from step ${currentStep} to step ${currentStep + 1}`);
+      console.log("TruckProcessingModal - Current formData:", formData);
       setCurrentStep(prev => prev + 1);
     }
   };
@@ -404,6 +445,33 @@ const TruckProcessingModal = ({ isOpen, onClose, truck, onProcessingComplete }: 
   const renderStepContent = () => {
     if (isLoading) {
       return <div className="flex justify-center py-8">Loading...</div>;
+    }
+    
+    // Check if we need to pre-initialize nextMilestone for the Summary step
+    if (currentStep === 3 && !formData.nextMilestone && truck?.plannedDestination) {
+      // Initialize nextMilestone based on plannedDestination if not already set
+      let initialNextMilestone: "WeighBridge" | "InternalParking" = "WeighBridge";
+      
+      if (truck.plannedDestination === "Internal Parking") {
+        initialNextMilestone = "InternalParking";
+      }
+      
+      console.log("TruckProcessingModal - Pre-initializing nextMilestone for Summary step:", initialNextMilestone);
+      
+      // Create a copy of formData with the initialized nextMilestone
+      const updatedFormData = {
+        ...formData,
+        nextMilestone: initialNextMilestone
+      };
+      
+      // Use the updated form data for the Summary step
+      return (
+        <SummaryStep 
+          formData={updatedFormData} 
+          updateFormData={updateFormData}
+          truck={truck}
+        />
+      );
     }
     
     switch (currentStep) {
