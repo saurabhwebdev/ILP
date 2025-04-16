@@ -1340,7 +1340,15 @@ const RoleAssignmentModal = ({
               <div className="flex items-center py-2 mt-2">
                 <div className="h-10 w-10 flex-shrink-0 mr-3">
                   {user.photoURL ? (
-                    <img className="h-10 w-10 rounded-full" src={user.photoURL} alt="" />
+                    <img 
+                      className="h-10 w-10 rounded-full object-cover" 
+                      src={user.photoURL} 
+                      alt="" 
+                      onError={(e) => {
+                        e.currentTarget.onerror = null;
+                        e.currentTarget.src = 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="%236b7280" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="5"/><path d="M20 21a8 8 0 0 0-16 0"/></svg>';
+                      }}
+                    />
                   ) : (
                     <div className="h-10 w-10 rounded-full bg-gray-200 flex items-center justify-center">
                       <Users className="h-5 w-5 text-gray-500" />
@@ -1447,7 +1455,15 @@ const DeleteUserModal = ({
               <div className="flex items-center py-2 mt-2">
                 <div className="h-10 w-10 flex-shrink-0 mr-3">
                   {user.photoURL ? (
-                    <img className="h-10 w-10 rounded-full" src={user.photoURL} alt="" />
+                    <img 
+                      className="h-10 w-10 rounded-full object-cover" 
+                      src={user.photoURL} 
+                      alt="" 
+                      onError={(e) => {
+                        e.currentTarget.onerror = null;
+                        e.currentTarget.src = 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="%236b7280" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="5"/><path d="M20 21a8 8 0 0 0-16 0"/></svg>';
+                      }}
+                    />
                   ) : (
                     <div className="h-10 w-10 rounded-full bg-gray-200 flex items-center justify-center">
                       <Users className="h-5 w-5 text-gray-500" />
@@ -1575,7 +1591,15 @@ const BanUserModal = ({
               <div className="flex items-center py-2 mt-2">
                 <div className="h-10 w-10 flex-shrink-0 mr-3">
                   {user.photoURL ? (
-                    <img className="h-10 w-10 rounded-full" src={user.photoURL} alt="" />
+                    <img 
+                      className="h-10 w-10 rounded-full object-cover" 
+                      src={user.photoURL} 
+                      alt="" 
+                      onError={(e) => {
+                        e.currentTarget.onerror = null;
+                        e.currentTarget.src = 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="%236b7280" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="5"/><path d="M20 21a8 8 0 0 0-16 0"/></svg>';
+                      }}
+                    />
                   ) : (
                     <div className="h-10 w-10 rounded-full bg-gray-200 flex items-center justify-center">
                       <Users className="h-5 w-5 text-gray-500" />
@@ -2146,7 +2170,16 @@ const UserManagement = () => {
                     <div className="flex items-center">
                       <div className="h-10 w-10 flex-shrink-0 mr-3">
                         {user.photoURL ? (
-                          <img className="h-10 w-10 rounded-full" src={user.photoURL} alt="" />
+                          <img 
+                            className="h-10 w-10 rounded-full object-cover" 
+                            src={user.photoURL} 
+                            alt=""
+                            onError={(e) => {
+                              // Handle image load errors by replacing with fallback
+                              e.currentTarget.onerror = null;
+                              e.currentTarget.src = 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="%236b7280" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="5"/><path d="M20 21a8 8 0 0 0-16 0"/></svg>';
+                            }} 
+                          />
                         ) : (
                           <div className="h-10 w-10 rounded-full bg-gray-200 flex items-center justify-center">
                             <Users className="h-5 w-5 text-gray-500" />
