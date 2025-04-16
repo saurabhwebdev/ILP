@@ -1,73 +1,164 @@
-# Welcome to your Lovable project
+# Inbound Logistics Platform (ILP)
 
-## Project info
+![License](https://img.shields.io/badge/license-MIT-blue.svg)
+![Version](https://img.shields.io/badge/version-1.0.0-green.svg)
 
-**URL**: https://lovable.dev/projects/2e9441d1-28a5-40c8-bb95-a007b58ddd75
+## 📋 Overview
 
-## How can I edit this code?
+The Inbound Logistics Platform (ILP) is a comprehensive web application designed to streamline and optimize inbound logistics operations. The platform enables efficient management of truck entries, dock scheduling, transporter collaboration, weigh bridge operations, and shift handovers.
 
-There are several ways of editing your application.
+### 🌟 Key Features
 
-**Use Lovable**
+- **Truck Entry Management**: Efficiently record and manage incoming truck details
+- **Dock Management**: Optimize dock assignments and scheduling
+- **Transporter Collaboration**: Seamless communication with transport partners
+- **Weigh Bridge Integration**: Automated weight recording and verification
+- **Shift Handover**: Smooth transition between operational shifts
+- **User Authentication**: Secure login and role-based access control
+- **Dashboard Analytics**: Real-time visibility of logistics operations
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/2e9441d1-28a5-40c8-bb95-a007b58ddd75) and start prompting.
+## 🚀 Getting Started
 
-Changes made via Lovable will be committed automatically to this repo.
+### Prerequisites
 
-**Use your preferred IDE**
+- Node.js (v18.x or higher)
+- npm (v9.x or higher) or Bun
 
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
+### Installation
 
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
+1. Clone the repository:
+   ```sh
+   git clone <repository-url>
+   cd ilp
+   ```
 
-Follow these steps:
+2. Install dependencies:
+   ```sh
+   npm install
+   # or with Bun
+   bun install
+   ```
 
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
+3. Set up environment variables:
+   - Create a `.env` file based on the provided `.env.example`
+   - Add your Firebase or other service credentials
 
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
+4. Start the development server:
+   ```sh
+   npm run dev
+   # or with Bun
+   bun run dev
+   ```
 
-# Step 3: Install the necessary dependencies.
-npm i
+5. Open [http://localhost:5173](http://localhost:5173) in your browser.
 
-# Step 4: Start the development server with auto-reloading and an instant preview.
-npm run dev
+## 🏗️ Project Structure
+
+```
+ilp/
+├── public/           # Static assets
+├── src/
+│   ├── components/   # Reusable UI components
+│   ├── contexts/     # React contexts for state management
+│   ├── hooks/        # Custom React hooks
+│   ├── lib/          # Utility functions and services
+│   ├── pages/        # Application pages
+│   ├── App.tsx       # Main application component
+│   └── main.tsx      # Application entry point
+├── .env              # Environment variables
+├── package.json      # Project dependencies and scripts
+└── vite.config.ts    # Vite configuration
 ```
 
-**Edit a file directly in GitHub**
+## 🛠️ Tech Stack
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+- **Frontend Framework**: React with TypeScript
+- **Build Tool**: Vite
+- **Routing**: React Router v6
+- **UI Components**: shadcn/ui (Radix UI)
+- **Styling**: Tailwind CSS
+- **State Management**: React Context API, React Query
+- **Forms**: React Hook Form with Zod validation
+- **Authentication**: Firebase Authentication
+- **Notifications**: Sonner, React Toast
 
-**Use GitHub Codespaces**
+## 📝 Available Scripts
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+- `npm run dev` - Start the development server
+- `npm run build` - Build for production
+- `npm run build:dev` - Build for development/staging
+- `npm run lint` - Run ESLint for code quality checks
+- `npm run preview` - Preview the production build locally
 
-## What technologies are used for this project?
+## 🔐 Authentication
 
-This project is built with:
+The application uses Firebase Authentication for user management. The `AuthProvider` context in `src/contexts/AuthContext.tsx` handles:
 
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
+- User registration
+- User login
+- Password reset
+- Authentication state persistence
+- Role-based access control
 
-## How can I deploy this project?
+## 🌐 Deployment
 
-Simply open [Lovable](https://lovable.dev/projects/2e9441d1-28a5-40c8-bb95-a007b58ddd75) and click on Share -> Publish.
+### Build for Production
 
-## Can I connect a custom domain to my Lovable project?
+```sh
+npm run build
+```
 
-Yes, you can!
+The build artifacts will be stored in the `dist/` directory.
 
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
+### Deployment Options
 
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/tips-tricks/custom-domain#step-by-step-guide)
+1. **Lovable Platform**: 
+   - Open [Lovable](https://lovable.dev/projects/2e9441d1-28a5-40c8-bb95-a007b58ddd75)
+   - Click on Share -> Publish
+
+2. **Manual Deployment**:
+   - Deploy the `dist/` directory to your preferred hosting platform (Vercel, Netlify, Firebase Hosting, etc.)
+
+## 🧪 Testing
+
+The project is set up for testing with the following technologies:
+- Unit testing with Vitest
+- Component testing with React Testing Library
+- End-to-end testing with Playwright
+
+To run tests:
+```sh
+npm run test        # Run unit and component tests
+npm run test:e2e    # Run end-to-end tests
+```
+
+## 📚 Documentation
+
+Additional documentation is available in the `docs/` directory:
+- API Documentation
+- User Guide
+- Developer Guide
+- Architecture Documentation
+
+## 🤝 Contributing
+
+1. Fork the repository
+2. Create your feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit your changes (`git commit -m 'Add some amazing feature'`)
+4. Push to the branch (`git push origin feature/amazing-feature`)
+5. Open a Pull Request
+
+## 📜 License
+
+This project is licensed under the MIT License - see the LICENSE file for details.
+
+## 📧 Contact
+
+Project Link: [https://github.com/yourusername/ilp](https://github.com/yourusername/ilp)
+
+## 🙏 Acknowledgments
+
+- [shadcn/ui](https://ui.shadcn.com/) - For the amazing UI components
+- [Tailwind CSS](https://tailwindcss.com/) - For the utility-first CSS framework
+- [Vite](https://vitejs.dev/) - For the lightning-fast build tool
+- [Firebase](https://firebase.google.com/) - For authentication and backend services
