@@ -1,7 +1,12 @@
+import { useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
+import { MessageSquare } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import FeedbackModal from "@/components/FeedbackModal";
 
 const Profile = () => {
   const { currentUser, userRole } = useAuth();
+  const [isFeedbackModalOpen, setIsFeedbackModalOpen] = useState(false);
   
   // Function to get role badge color based on role
   const getRoleBadgeColor = (role: string | null) => {
@@ -62,7 +67,27 @@ const Profile = () => {
             </div>
           </div>
         </div>
+        
+        <div className="border-t mt-6 pt-6">
+          <h3 className="text-lg font-medium mb-3">Help & Feedback</h3>
+          <p className="text-gray-500 mb-4">
+            We value your input! Help us improve the platform by sharing your feedback, reporting issues, or suggesting improvements.
+          </p>
+          <Button 
+            onClick={() => setIsFeedbackModalOpen(true)}
+            className="flex items-center gap-2"
+          >
+            <MessageSquare className="h-4 w-4" />
+            Share Feedback
+          </Button>
+        </div>
       </div>
+      
+      {/* Feedback Modal */}
+      <FeedbackModal 
+        isOpen={isFeedbackModalOpen} 
+        onClose={() => setIsFeedbackModalOpen(false)} 
+      />
     </div>
   );
 };

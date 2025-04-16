@@ -21,7 +21,9 @@ import {
   Users, 
   Shield, 
   Clock,
-  Info
+  Info,
+  MessageSquare,
+  HardHat
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { db } from "@/lib/firebase";
@@ -62,6 +64,8 @@ import {
   RadioGroup,
   RadioGroupItem,
 } from "@/components/ui/radio-group";
+//Import the FeedbackList component near the top with the other imports
+import FeedbackList from "@/components/FeedbackList";
 
 // Approval request interface
 interface ApprovalRequest {
@@ -3398,48 +3402,50 @@ const Settings = () => {
   
   return (
     <div className="container mx-auto max-w-7xl py-10">
-      <h1 className="text-2xl font-bold mb-6">System Settings</h1>
+      <h1 className="text-3xl font-bold text-ilp-navy mb-6">Settings</h1>
       
-      <Tabs defaultValue="transporter">
-        <TabsList className="w-full mb-6 p-1 border-b bg-gray-50 rounded-t-lg">
-          <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-9 gap-2 w-full">
-            <TabsTrigger value="transporter" className="flex items-center justify-center gap-1 py-2 px-3 text-sm">
-              <Truck className="h-4 w-4" />
+      <Tabs defaultValue="transporter" className="w-full">
+        <TabsList className="mb-4 flex flex-wrap">
+          <TabsTrigger value="transporter" className="flex gap-1 items-center">
+            <Truck className="w-4 h-4" />
               <span>Transporter</span> 
             </TabsTrigger>
-            <TabsTrigger value="approvals" className="flex items-center justify-center gap-1 py-2 px-3 text-sm">
-              <ShieldCheck className="h-4 w-4" />
-              <span>Approvals</span>
+          <TabsTrigger value="truckManagement" className="flex gap-1 items-center">
+            <ShieldCheck className="w-4 h-4" />
+            <span>Truck Management</span>
             </TabsTrigger>
-            <TabsTrigger value="truckManagement" className="flex items-center justify-center gap-1 py-2 px-3 text-sm">
-              <Truck className="h-4 w-4" />
-              <span>Truck Mgmt</span>
-            </TabsTrigger>
-            <TabsTrigger value="weighbridge" className="flex items-center justify-center gap-1 py-2 px-3 text-sm">
-              <Scale className="h-4 w-4" />
+          <TabsTrigger value="weighbridge" className="flex gap-1 items-center">
+            <Scale className="w-4 h-4" />
               <span>Weighbridge</span>
             </TabsTrigger>
-            <TabsTrigger value="tatManagement" className="flex items-center justify-center gap-1 py-2 px-3 text-sm">
-              <Clock className="h-4 w-4" />
-              <span>TAT Mgmt</span>
+          <TabsTrigger value="dock" className="flex gap-1 items-center">
+            <Warehouse className="w-4 h-4" />
+            <span>Dock</span>
             </TabsTrigger>
-            <TabsTrigger value="safetyEquipment" className="flex items-center justify-center gap-1 py-2 px-3 text-sm">
-              <ShieldAlert className="h-4 w-4" />
-              <span>Safety Equip</span>
+          <TabsTrigger value="users" className="flex gap-1 items-center">
+            <Users className="w-4 h-4" />
+            <span>Users</span>
             </TabsTrigger>
-            <TabsTrigger value="docks" className="flex items-center justify-center gap-1 py-2 px-3 text-sm">
-              <Warehouse className="h-4 w-4" />
-              <span>Dock Mgmt</span>
+          <TabsTrigger value="roles" className="flex gap-1 items-center">
+            <Shield className="w-4 h-4" />
+            <span>Roles</span>
             </TabsTrigger>
-            <TabsTrigger value="roleManagement" className="flex items-center justify-center gap-1 py-2 px-3 text-sm">
-              <Shield className="h-4 w-4" />
-              <span>Role Mgmt</span>
+          <TabsTrigger value="tat" className="flex gap-1 items-center">
+            <Clock className="w-4 h-4" />
+            <span>TAT</span>
             </TabsTrigger>
-            <TabsTrigger value="userManagement" className="flex items-center justify-center gap-1 py-2 px-3 text-sm">
-              <Users className="h-4 w-4" />
-              <span>User Mgmt</span>
+          <TabsTrigger value="safetyEquipment" className="flex gap-1 items-center">
+            <HardHat className="w-4 h-4" />
+            <span>Safety Equipment</span>
+          </TabsTrigger>
+          <TabsTrigger value="approvals" className="flex gap-1 items-center">
+            <ShieldAlert className="w-4 h-4" />
+            <span>Approvals</span>
             </TabsTrigger>
-          </div>
+          <TabsTrigger value="feedback" className="flex gap-1 items-center">
+            <MessageSquare className="w-4 h-4" />
+            <span>Feedback</span>
+          </TabsTrigger>
         </TabsList>
         
         <TabsContent value="transporter">
@@ -3552,6 +3558,153 @@ const Settings = () => {
                       </Button>
                     </div>
                   ))}
+                </div>
+              </div>
+            </div>
+          </div>
+        </TabsContent>
+        
+        <TabsContent value="truckManagement">
+          <div className="bg-white rounded-lg shadow-md p-6 mb-6">
+            <h2 className="text-xl font-semibold mb-4">Truck Management</h2>
+            <p className="text-gray-600 mb-6">Manage trucks in the system - view, delete, or restore trucks.</p>
+            
+            <TruckManagement />
+          </div>
+        </TabsContent>
+        
+        <TabsContent value="weighbridge">
+          <WeighbridgeSettings />
+        </TabsContent>
+        
+        <TabsContent value="dock">
+          <DockSettings />
+        </TabsContent>
+        
+        <TabsContent value="users">
+          <div className="bg-white rounded-lg shadow-md p-6 mb-6">
+            <h2 className="text-xl font-semibold mb-4">User Management</h2>
+            <p className="text-gray-600 mb-6">Manage users and their access to the system.</p>
+            
+            <UserManagement />
+          </div>
+        </TabsContent>
+        
+        <TabsContent value="roles">
+          <div className="bg-white rounded-lg shadow-md p-6 mb-6">
+            <h2 className="text-xl font-semibold mb-4">Role Management</h2>
+            <p className="text-gray-600 mb-6">Create, edit, and delete roles to manage user permissions in the system.</p>
+            
+            <RoleManagement />
+          </div>
+        </TabsContent>
+        
+        <TabsContent value="tat">
+          <TATSettings />
+        </TabsContent>
+        
+        <TabsContent value="safetyEquipment">
+          <div className="bg-white rounded-lg shadow-md p-6 mb-6">
+            <h2 className="text-xl font-semibold mb-4">Safety Equipment Inventory</h2>
+            <p className="text-gray-600 mb-6">Manage safety equipment inventory and track distribution.</p>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="space-y-4">
+                <h3 className="text-lg font-medium">Wheel Chokes</h3>
+                
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <Label htmlFor="wheelChokeCount">Total Inventory:</Label>
+                    <div className="flex items-center gap-2">
+                      <Input
+                        id="wheelChokeCount"
+                        type="number"
+                        value={wheelChokeCount}
+                        onChange={(e) => setWheelChokeCount(parseInt(e.target.value) || 0)}
+                        min="0"
+                        className="w-24"
+                      />
+                      <span className="text-gray-500">units</span>
+                    </div>
+                  </div>
+                  
+                  <div className="flex items-center justify-between">
+                    <Label htmlFor="issuedWheelChokes">Issued:</Label>
+                    <div className="flex items-center gap-2">
+                      <Input
+                        id="issuedWheelChokes"
+                        type="number"
+                        value={issuedWheelChokes}
+                        onChange={(e) => setIssuedWheelChokes(parseInt(e.target.value) || 0)}
+                        min="0"
+                        max={wheelChokeCount}
+                        className="w-24"
+                      />
+                      <span className="text-gray-500">units</span>
+                    </div>
+                  </div>
+                  
+                  <div className="flex items-center justify-between pt-2 border-t">
+                    <span className="font-medium">Available:</span>
+                    <span className="font-medium text-green-600">{wheelChokeCount - issuedWheelChokes}</span>
+                  </div>
+                </div>
+              </div>
+              
+              <div className="space-y-4">
+                <h3 className="text-lg font-medium">Safety Shoes</h3>
+                
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <Label htmlFor="safetyShoeCount">Total Inventory:</Label>
+                    <div className="flex items-center gap-2">
+                      <Input
+                        id="safetyShoeCount"
+                        type="number"
+                        value={safetyShoeCount}
+                        onChange={(e) => setSafetyShoeCount(parseInt(e.target.value) || 0)}
+                        min="0"
+                        className="w-24"
+                      />
+                      <span className="text-gray-500">pairs</span>
+                    </div>
+                  </div>
+                  
+                  <div className="flex items-center justify-between">
+                    <Label htmlFor="issuedSafetyShoes">Issued:</Label>
+                    <div className="flex items-center gap-2">
+                      <Input
+                        id="issuedSafetyShoes"
+                        type="number"
+                        value={issuedSafetyShoes}
+                        onChange={(e) => setIssuedSafetyShoes(parseInt(e.target.value) || 0)}
+                        min="0"
+                        max={safetyShoeCount}
+                        className="w-24"
+                      />
+                      <span className="text-gray-500">pairs</span>
+                    </div>
+                  </div>
+                  
+                  <div className="flex items-center justify-between pt-2 border-t">
+                    <span className="font-medium">Available:</span>
+                    <span className="font-medium text-green-600">{safetyShoeCount - issuedSafetyShoes}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            <div className="mt-8 bg-blue-50 p-4 rounded-md border border-blue-200">
+              <div className="flex gap-2">
+                <div className="text-blue-600">
+                  <Info className="h-5 w-5" />
+                </div>
+                <div>
+                  <h4 className="text-sm font-medium text-blue-800">Safety Equipment Inventory Management</h4>
+                  <p className="text-sm text-blue-700">
+                    Keep track of your safety equipment inventory to ensure compliance with safety regulations.
+                    Update the counts as equipment is issued to drivers or returned to inventory.
+                  </p>
                 </div>
               </div>
             </div>
@@ -3786,141 +3939,12 @@ const Settings = () => {
           </div>
         </TabsContent>
         
-        <TabsContent value="truckManagement">
+        <TabsContent value="feedback">
           <div className="bg-white rounded-lg shadow-md p-6 mb-6">
-            <h2 className="text-xl font-semibold mb-4">Truck Management</h2>
-            <p className="text-gray-600 mb-6">Manage trucks in the system - view, delete, or restore trucks.</p>
+            <h2 className="text-xl font-semibold mb-4">User Feedback Management</h2>
+            <p className="text-gray-600 mb-6">Review and respond to user feedback, suggestions, and bug reports.</p>
             
-            <TruckManagement />
-          </div>
-        </TabsContent>
-        
-        <TabsContent value="weighbridge">
-          <WeighbridgeSettings />
-        </TabsContent>
-        
-        <TabsContent value="tatManagement">
-          <TATSettings />
-        </TabsContent>
-        
-        <TabsContent value="safetyEquipment">
-          <div className="bg-white rounded-lg shadow-md p-6 mb-6">
-            <h2 className="text-xl font-semibold mb-4">Safety Equipment Inventory</h2>
-            <p className="text-gray-600 mb-6">Track and manage safety equipment issued to drivers and available in inventory.</p>
-            
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <Card>
-                <CardHeader>
-                  <CardTitle className="text-lg">Wheel Chokes</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="wheelChokeCount">Total Inventory</Label>
-                      <Input 
-                        id="wheelChokeCount"
-                        type="number"
-                        value={wheelChokeCount}
-                        onChange={(e) => setWheelChokeCount(parseInt(e.target.value) || 0)}
-                        min={0}
-                      />
-                    </div>
-                    
-                    <div className="space-y-2">
-                      <Label htmlFor="issuedWheelChokes">Issued</Label>
-                      <Input 
-                        id="issuedWheelChokes"
-                        type="number"
-                        value={issuedWheelChokes}
-                        onChange={(e) => setIssuedWheelChokes(parseInt(e.target.value) || 0)}
-                        min={0}
-                        max={wheelChokeCount}
-                      />
-                    </div>
-                    
-                    <div className="p-3 bg-gray-50 rounded-md">
-                      <div className="flex justify-between items-center mb-2">
-                        <span className="text-sm font-medium">Available</span>
-                        <span className="font-bold text-green-600">{wheelChokeCount - issuedWheelChokes}</span>
-                      </div>
-                      <div className="w-full bg-gray-200 rounded-full h-2.5">
-                        <div 
-                          className="bg-green-600 h-2.5 rounded-full" 
-                          style={{ width: `${wheelChokeCount > 0 ? ((wheelChokeCount - issuedWheelChokes) / wheelChokeCount) * 100 : 0}%` }}
-                        ></div>
-                      </div>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-              
-              <Card>
-                <CardHeader>
-                  <CardTitle className="text-lg">Safety Shoes</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="safetyShoeCount">Total Inventory</Label>
-                      <Input 
-                        id="safetyShoeCount"
-                        type="number"
-                        value={safetyShoeCount}
-                        onChange={(e) => setSafetyShoeCount(parseInt(e.target.value) || 0)}
-                        min={0}
-                      />
-                    </div>
-                    
-                    <div className="space-y-2">
-                      <Label htmlFor="issuedSafetyShoes">Issued</Label>
-                      <Input 
-                        id="issuedSafetyShoes"
-                        type="number"
-                        value={issuedSafetyShoes}
-                        onChange={(e) => setIssuedSafetyShoes(parseInt(e.target.value) || 0)}
-                        min={0}
-                        max={safetyShoeCount}
-                      />
-                    </div>
-                    
-                    <div className="p-3 bg-gray-50 rounded-md">
-                      <div className="flex justify-between items-center mb-2">
-                        <span className="text-sm font-medium">Available</span>
-                        <span className="font-bold text-green-600">{safetyShoeCount - issuedSafetyShoes}</span>
-                      </div>
-                      <div className="w-full bg-gray-200 rounded-full h-2.5">
-                        <div 
-                          className="bg-green-600 h-2.5 rounded-full" 
-                          style={{ width: `${safetyShoeCount > 0 ? ((safetyShoeCount - issuedSafetyShoes) / safetyShoeCount) * 100 : 0}%` }}
-                        ></div>
-                      </div>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
-          </div>
-        </TabsContent>
-        
-        <TabsContent value="docks" className="space-y-4">
-          <DockSettings />
-        </TabsContent>
-        
-        <TabsContent value="roleManagement">
-          <div className="bg-white rounded-lg shadow-md p-6 mb-6">
-            <h2 className="text-xl font-semibold mb-4">Role Management</h2>
-            <p className="text-gray-600 mb-6">Create, edit, and delete roles to manage user permissions in the system.</p>
-            
-            <RoleManagement />
-          </div>
-        </TabsContent>
-        
-        <TabsContent value="userManagement">
-          <div className="bg-white rounded-lg shadow-md p-6 mb-6">
-            <h2 className="text-xl font-semibold mb-4">User Management</h2>
-            <p className="text-gray-600 mb-6">Manage users and their access to the system.</p>
-            
-            <UserManagement />
+            <FeedbackList />
           </div>
         </TabsContent>
       </Tabs>
