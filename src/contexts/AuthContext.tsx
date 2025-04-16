@@ -72,7 +72,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         console.log("Setting user role to:", userRole);
         setUserRoleWithRef(userRole); // Use the custom function
         
-        // Set page access based on role - creating proper Record<string, boolean>
+        // Set page access based on role
         if (userRole === "ADMIN") {
           console.log("User is ADMIN, setting full access");
           setPageAccess({
@@ -87,12 +87,45 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             "profile": true
           });
         } else {
-          console.log("User is regular user, setting standard access");
-          setPageAccess({
-            "dashboard": true,
-            "settings": true,
-            "profile": true
-          });
+          // Fetch custom role permissions from Firestore
+          try {
+            console.log(`Fetching access permissions for role: ${userRole}`);
+            const roleRef = doc(db, "roles", userRole);
+            const roleDoc = await getDoc(roleRef);
+            
+            if (roleDoc.exists()) {
+              const roleData = roleDoc.data();
+              console.log("Role document found:", roleData);
+              
+              // Get page access permissions from role document
+              const rolePageAccess = roleData.pageAccess || {};
+              
+              // Ensure dashboard and profile are always accessible
+              const pageAccessWithDefaults = {
+                ...rolePageAccess,
+                "dashboard": true,
+                "profile": true
+              };
+              
+              console.log("Setting page access for role:", pageAccessWithDefaults);
+              setPageAccess(pageAccessWithDefaults);
+            } else {
+              console.log("Role document not found, using standard access");
+              setPageAccess({
+                "dashboard": true,
+                "settings": true,
+                "profile": true
+              });
+            }
+          } catch (roleError) {
+            console.error("Error fetching role permissions:", roleError);
+            // Fall back to standard permissions
+            setPageAccess({
+              "dashboard": true,
+              "settings": true,
+              "profile": true
+            });
+          }
         }
       } else {
         console.warn("User document does not exist in Firestore, using default USER role");
